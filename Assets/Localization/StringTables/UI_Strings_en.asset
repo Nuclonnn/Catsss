@@ -1,0 +1,84 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: UI_Strings_en
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.StringTable
+  m_LocaleId:
+    m_Code: en
+  m_SharedData: {fileID: 11400000, guid: 46d6dcb795e43a84db152f2f366da1ce, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 2431442944
+    m_Localized: Press E
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2511134720
+    m_Localized: Press Shift to dash
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20545713004544
+    m_Localized: Catsss
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20545792696320
+    m_Localized: Start game
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20545792696321
+    m_Localized: Connect
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20545792696322
+    m_Localized: Back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20545792696323
+    m_Localized: Quit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20545792696324
+    m_Localized: Enter IP
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20545792696325
+    m_Localized: Enter Port
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20545792696326
+    m_Localized: 'Host IP for guest (LAN / Hamachi): {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20545792696327
+    m_Localized: Not found
+    m_Metadata:
+      m_Items: []
+  - m_Id: 25028727726080
+    m_Localized: Could not connect to the host. Check IP, port, and that the host
+      is running.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26582243401728
+    m_Localized: Enter the host IP or hostname.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26582302121984
+    m_Localized: 'Invalid IP or hostname. Example: 192.168.0.5 or localhost'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 26582302121985
+    m_Localized: Invalid port. Enter a number from 1 to 65535.
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []

@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 829c8122a7dd4e642bb8ff7ee154ec87, type: 3}
+  m_Name: HighJumpChatge
+  m_EditorClassIdentifier: Assembly-CSharp::Catsss.Configs.Charge.ChargeTypeDefinition
+  id: 1
+  displayName: Air Charge
+  durationSeconds: 0
+  jumpHeightMultiplier: 3
+  moveSpeedMultiplier: 1
+  suppressJump: 0
+  isHeavy: 0
+  heavyGravityMultiplier: 2.5
+  auraColor: {r: 0, g: 1, b: 1, a: 1}
+  vfxPrefab: {fileID: 0}

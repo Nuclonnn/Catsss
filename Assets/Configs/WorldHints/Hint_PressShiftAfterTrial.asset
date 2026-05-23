@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73fc68288d16443893691faa614e29c8, type: 3}
+  m_Name: Hint_PressShiftAfterTrial
+  m_EditorClassIdentifier: Assembly-CSharp::Catsss.Core.WorldHints.WorldTextHintDefinition
+  text:
+    localizedText:
+      m_TableReference:
+        m_TableCollectionName: GUID:46d6dcb795e43a84db152f2f366da1ce
+      m_TableEntryReference:
+        m_KeyId: 2511134720
+        m_Key: 
+      m_FallbackState: 0
+      m_WaitForCompletion: 0
+      m_LocalVariables: []
+    editorFallback: Press Shift to dash
+  anchorMode: 2
+  localOffset: {x: 0, y: 0, z: 0}
+  priority: 100
+  showRule:
+    kind: 4
+    trialProgressChannel: {fileID: 0}
+    trialIdFilter: -1
+    trialPhase: 1
+    emptyEventChannel: {fileID: 0}
+    requireLocalPlayerCanDash: 1
+    requireRuntimeEvent: 1
+  hideRule:
+    kind: 1
+    inputAction: 0
+    timeoutSeconds: 0
+    trialProgressChannel: {fileID: 0}
+    trialIdFilter: -1
+    trialPhase: 0
+    emptyEventChannel: {fileID: 0}
+  references:
+    version: 2
+    RefIds: []
