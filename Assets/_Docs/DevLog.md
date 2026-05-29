@@ -4,6 +4,25 @@
 
 ---
 
+## Май 2026 — Stage 4: бросок заряда и передача (MVP)
+
+**Цель:** метание заряда между котами в co-op trial — Aim, homing-снаряд, catch/miss, лимит попыток.
+
+**Реализовано:**
+
+- `PlayerAimController` — ПКМ toggle Aim, ЛКМ throw (owner-only), `ThrowChargeServerRpc`.
+- `PlayerThrowDirectionResolver` — луч из viewport (настройка `aimViewportY`), бросок в небо, синхрон с Cinemachine.
+- `ChargeProjectile` — server kinematic homing, catch/miss, `TrialSessionRegistry` attempts.
+- `PlayerAimVisualsPresenter` + `LineRendererAimTrajectory` — дуга предпросмотра.
+- `PlayerIncomingChargeIndicator` + visual stub — telegraph без пульсации; `ProjectileThrowSignals`.
+- Edge cases 4.7: disconnect → restore snapshot кидавшему без декремента попыток; штраф bounds → `AbortAllForTrialServer`; auto-exit Aim; cooldown после catch.
+
+**Решения:** без soft-lock; попытки и бонус таймера в `ChargeTypeDefinition`; **4.6 Aim-камера отложена** — текущая orbital.
+
+**Документы:** `Stage 4.md`, `Development-Status.md`, `Architecture-Snapshot.md`.
+
+---
+
 ## Май 2026 — Stage 3 фаза B: штрафы испытания
 
 **Цель:** закрыть gameplay loop испытаний по `GDD.md` — зона, командный сброс, телепорт на чекпоинт.

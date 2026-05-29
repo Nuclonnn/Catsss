@@ -15,6 +15,9 @@ MonoBehaviour:
   id: 1
   displayName: Air Charge
   durationSeconds: 0
+  bonusReturnSecondsOnMiss: 1.5
+  maxThrowAttemptsPerTrial: 3
+  throwCooldownAfterCatch: 0.4
   jumpHeightMultiplier: 3
   moveSpeedMultiplier: 1
   suppressJump: 0

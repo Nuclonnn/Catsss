@@ -1,10 +1,10 @@
 # ЭТАП 4: Бросок заряда и передача между котами
 
-**Статус:** План зафиксирован, реализация ещё не начата.
+**Статус:** ✅ MVP закрыт (4.0–4.5, 4.7). **4.6 (отдельная Aim-камера) — отложен**, не требуется для альфы.
 
 **Цель:** Заряженный игрок прицеливается и кидает физический снаряд. Снаряд закручивается к напарнику. Если напарник поймал — заряд (с обновлённым таймером) переходит к нему вместе с активным `trialId`. Если промах — снаряд исчезает, заряд возвращается кидавшему с бонусом к таймеру; после исчерпания попыток — командный штраф (как в Stage 3 phase B).
 
-Этот документ — **дизайн + roadmap**. Исходное ТЗ задач 4.1–4.4 — внизу в свёрнутом блоке (для исторической справки). По ходу реализации сюда добавятся «Фактическая реализация» и «Настройка в Unity» по аналогии со `Stage 3.md`.
+Документ: **архитектура + roadmap + фактическая реализация**. Исходное ТЗ 4.1–4.4 — в свёрнутом блоке внизу.
 
 ---
 
@@ -43,7 +43,7 @@
 ### F. Выбор цели
 
 - В 2-coop цель = **второй игрок** (всегда). Если игроков больше — ближайший по дистанции (направление не учитывается).
-- Если в сцене только 1 игрок — вход в Aim **заблокирован** (нет цели).
+- Solo-тест: Aim **разрешён без цели** (прямой полёт + луч прицела); homing только при живом напарнике.
 - В будущем (>2 игроков) можно ввести выбор по фокусу камеры — но пока YAGNI.
 
 ### G. Инпут
@@ -66,7 +66,7 @@
 - **Линия/дуга прицеливания** через интерфейс `IAimTrajectoryRenderer` — основная реализация `LineRendererAimTrajectory`, симулирует движение снаряда (тот же `RotateTowards` цикл) и пишет точки в `LineRenderer`. Симуляция отделена в `static ProjectileTrajectorySimulator.Simulate(...)` — переиспользуется и снарядом, и предпросмотром.
 - **Маркер цели** — `PlayerTargetMarker` (World-space Canvas над напарником в Aim Mode). Виден только владельцу-кидающему.
 - **Outline напарника** в Aim Mode — переиспользуем существующий URP-контур (Rendering Layer 1).
-- **Камера в Aim Mode** — переключение на отдельную `CinemachineCamera` (выше угол, чуть ближе радиус) через `PlayerAimCameraSwitcher` (приоритет Cinemachine). Cinemachine Brain делает плавный blend.
+- **Камера в Aim Mode (4.6)** — **отложено**. Используется текущая orbital-камера; направление броска — луч из viewport (`PlayerThrowDirectionResolver`).
 
 ### J. Telegraph эффект на ловящем
 
@@ -212,38 +212,84 @@
 
 ---
 
-### Шаг 4.6 — Свич камеры в Aim Mode (Cinemachine)
+### Шаг 4.6 — Свич камеры в Aim Mode — ⏸ отложен
 
-**Скрипты:**
-- `Scripts/Player/Aim/PlayerAimCameraSwitcher.cs` (owner-only): подписан на `PlayerAimController`, меняет `Priority` второй вирт.камере.
-
-**Unity:**
-- Добавить вторую `CinemachineCamera` в иерархию CameraRig игрока (`Cinemachine 3`).
-- Настроить: vertical axis ≈ 55–65°, чуть меньший радиус.
-- `CinemachineBrain.DefaultBlend` ≈ 0.3 с.
-- Связать в `PlayerAimCameraSwitcher`.
-
-**Проверка:** ПКМ → камера плавно «поднимается над игроком», ЛКМ-выстрел или повторный ПКМ → возвращается.
+Не входит в текущую альфу. Прицел и бросок работают на существующей `CinemachineCamera` + `PlayerThrowDirectionResolver` (луч из viewport, настройка `aimViewportY` в `GameConfig.Projectile`).
 
 ---
 
-### Шаг 4.7 — Polish + edge cases + документация
+### Шаг 4.7 — Polish + edge cases + документация — ✅
 
-**Скрипты:**
-- `throwCooldownAfterCatch` в `PlayerAimController` — блокирует вход в Aim N секунд после `ChargeChanged(charged)`.
-- Disconnect одного из игроков пока летит снаряд → сервер despawn’ит снаряд, возврат заряда кидавшему **без декремента попыток**.
-- `TrialBoundsZone` штраф при полёте снаряда → сервер despawn’ит снаряд тихо (попытка не тратится, штраф уже сработал по другой причине).
-- Auto-exit Aim при потере заряда (резерв на любой случай).
-
-**Документация:**
-- Обновить `Stage 4.md` (этот файл): добавить раздел «Фактическая реализация» и «Настройка в Unity» по шаблону `Stage 3.md`.
-- `DevLog.md`: запись о завершении Stage 4 с ключевыми решениями (попытки, refresh таймера, без soft-lock).
-- `Development-Status.md`: статус Stage 4 = ✅, перевод фокуса на Stage 5.
-- `Architecture-Snapshot.md`: новая секция «Снаряд и Aim Mode» с диаграммой потока catch/miss.
+| Пункт | Реализация |
+|--------|------------|
+| `throwCooldownAfterCatch` | `PlayerAimController.NotifyThrowCatchCooldownStarted()` после поимки, значение из `ChargeTypeDefinition` |
+| Disconnect при полёте снаряда | `ChargeProjectile.AbortAllInFlightOnDisconnectServer` → restore snapshot кидавшему без `TryRegisterThrowMissServer`; `ClearAllPlayerChargesServer` пропускает restored thrower |
+| Штраф `TrialBoundsZone` при полёте | `ApplyTeamTrialPenalty` → `AbortAllForTrialServer` без учёта промаха |
+| Auto-exit Aim | `PlayerAimController.OnChargeChanged` при `chargeId == 0` |
+| Документация | этот файл, `DevLog.md`, `Development-Status.md`, `Architecture-Snapshot.md` |
 
 ---
 
-## 3. Сводная диаграмма потока (Stage 4)
+## 2. Фактическая реализация (MVP)
+
+### Скрипты
+
+| Область | Файлы |
+|---------|--------|
+| Прицел / ввод | `PlayerAimController`, `PlayerInputReader` (Aim toggle, Throw только в Aim) |
+| Направление броска | `PlayerThrowDirectionResolver` (viewport-луч, sky aim, fallback) |
+| Визуал прицела | `PlayerAimVisualsPresenter`, `LineRendererAimTrajectory`, `PlayerTargetMarker`, `ProjectileTrajectorySimulator` |
+| Снаряд | `ChargeProjectile`, prefab `ChargeProjectileRoot` в Network Prefabs |
+| Попытки / trial | `TrialSessionRegistry.TryRegisterThrowMissServer`, лимит из `ChargeTypeDefinition` |
+| Telegraph | `PlayerIncomingChargeIndicator`, `PlayerIncomingChargeVisualStub` (заглушка emission) |
+| Сигналы | `ProjectileThrowSignals` (Aim, incoming, attempts) |
+| Конфиг | `GameConfig.Projectile`, `ChargeTypeDefinition` (attempts, cooldown, bonus) |
+
+### Ключевые отличия от раннего плана
+
+- Бросок по **лучу экрана**, не по `camera.forward`.
+- Обновление дуги после **CinemachineCore.CameraUpdatedEvent**.
+- Попытки и бонус таймера — в **`ChargeTypeDefinition`**, не в `ProjectileSettings`.
+- **4.6** не реализован.
+
+---
+
+## 3. Настройка в Unity
+
+### Network
+
+- `ChargeProjectileRoot` в **Network Prefabs List** (не в сцене).
+- `TrialSessionRegistry` на сцене Sandbox.
+
+### PlayerRoot
+
+| Компонент | Назначение |
+|-----------|------------|
+| `PlayerAimController` | GameConfig, Camera, ThrowOrigin, prefab снаряда |
+| `PlayerAimVisualsPresenter` | Trajectory, TargetMarker, Camera |
+| `PlayerThrowOrigin` | Transform точки вылета |
+| `PlayerIncomingChargeIndicator` + `PlayerIncomingChargeVisualStub` | Telegraph на ловце |
+| `AimVisualsRoot` → `TrajectoryLine` (LineRenderer + Unlit/Transparent материал) |
+
+### GameConfig → Projectile
+
+- `aimViewportX/Y`, `aimRayLayerMask`, `aimRayFallbackDistance`, `throwSpeed`, `homingTurnSpeedDegPerSec`, шаги симуляции дуги.
+
+### Charge Type (SO)
+
+- `maxThrowAttemptsPerTrial`, `throwCooldownAfterCatch`, `bonusReturnSecondsOnMiss`.
+
+### Проверка (2 игрока)
+
+1. E на пилоне → заряд у инициатора.
+2. ПКМ → дуга + маркер на напарнике; ЛКМ → полёт, telegraph у ловца.
+3. Поймал → заряд у ловца, таймер refresh, кулдаун Aim у ловца.
+4. Промах → заряд кидавшему + бонус времени; 3-й промах → командный штраф.
+
+---
+
+
+## 4. Сводная диаграмма потока (Stage 4)
 
 ```
 PlayerAimController (owner, IsAiming = true)
@@ -275,7 +321,7 @@ ChargeProjectile (server, FixedUpdate)
 
 ---
 
-## 4. Открытые риски
+## 5. Открытые риски
 
 | Риск | Митигейт |
 |------|----------|
@@ -312,4 +358,4 @@ ChargeProjectile (server, FixedUpdate)
 
 ---
 
-*После начала реализации — этот документ обрастёт разделами «Фактическая реализация» и «Настройка в Unity» по образцу `Stage 3.md`.*
+*Следующий фокус: **Stage 5** (level kit / барьеры и т.д. по `Stage 5.md`).*

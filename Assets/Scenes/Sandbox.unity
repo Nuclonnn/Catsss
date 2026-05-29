@@ -625,8 +625,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Catsss.Trials.TrialSessionRegistry
   ShowTopMostFoldoutHeaderGroup: 1
+  gameConfig: {fileID: 11400000, guid: 41cbdd90658e2b043833edf49420d02c, type: 2}
   contentCatalog: {fileID: 11400000, guid: ad507073efc08874283ed26eeea7387d, type: 2}
   trialProgressChannel: {fileID: 11400000, guid: f931b05e20974194f823ceacffc5a253, type: 2}
+  enableThrowAttemptsDebugLogs: 1
 --- !u!4 &1507451477 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5106431601134170263, guid: 7552b5e3c993a2840bc30748c4f823db, type: 3}

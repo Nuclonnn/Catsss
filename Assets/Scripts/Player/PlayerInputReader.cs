@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -6,6 +7,8 @@ namespace Catsss.Player
     public sealed class PlayerInputReader : MonoBehaviour, global::InputSystem_Actions.IPlayerActions
     {
         private InputSystem_Actions _actions;
+        private InputAction _aimAction;
+        private bool _aimToggledThisFrame;
         private bool _jumpPressedThisFrame;
         private bool _dashPressedThisFrame;
         private bool _interactPressedThisFrame;
@@ -17,11 +20,18 @@ namespace Catsss.Player
         public bool SprintHeld { get; private set; }
         public bool IsLookInputFromMouse { get; private set; }
 
+        /// <summary>Action Aim доступен (после регенерации InputSystem_Actions с ПКМ).</summary>
+        public bool IsAimActionBound => _aimAction != null;
+
+        /// <summary>Срабатывает при нажатии ПКМ (Aim), до Consume — для UI/подсказок.</summary>
+        public event Action AimToggleBuffered;
+
         private void Awake()
         {
             _actions = new InputSystem_Actions();
             _actions.Player.SetCallbacks(this);
             _actions.Player.Disable();
+            CacheAimAction();
             ClearBufferedInput();
         }
 
@@ -39,6 +49,7 @@ namespace Catsss.Player
         public void EnableInput()
         {
             _actions?.Player.Enable();
+            CacheAimAction();
         }
 
         public void DisableInput()
@@ -55,10 +66,37 @@ namespace Catsss.Player
             JumpHeld = false;
             SprintHeld = false;
             IsLookInputFromMouse = false;
+            _aimToggledThisFrame = false;
             _jumpPressedThisFrame = false;
             _dashPressedThisFrame = false;
             _interactPressedThisFrame = false;
         }
+
+        private void CacheAimAction()
+        {
+            _aimAction = _actions != null ? _actions.Player.Aim : null;
+        }
+
+        private void BufferAimToggle()
+        {
+            _aimToggledThisFrame = true;
+            AimToggleBuffered?.Invoke();
+        }
+
+        public bool ConsumeAimToggledThisFrame()
+        {
+            bool wasPressed = _aimToggledThisFrame;
+            _aimToggledThisFrame = false;
+            return wasPressed;
+        }
+
+        /// <summary>ЛКМ только в кадре нажатия — без буфера между кадрами (важно для Aim Mode).</summary>
+        public bool ConsumeThrowPressedThisFrame()
+        {
+            return _actions != null && _actions.Player.Attack.WasPressedThisFrame();
+        }
+
+        public bool PeekAimToggledThisFrame() => _aimToggledThisFrame;
 
         public bool ConsumeInteractPressedThisFrame()
         {
@@ -125,8 +163,18 @@ namespace Catsss.Player
             }
         }
 
+        /// <summary>Throw читается через <see cref="ConsumeThrowPressedThisFrame"/> (WasPressedThisFrame), без буфера.</summary>
         public void OnAttack(InputAction.CallbackContext context)
         {
+        }
+
+        /// <summary>ПКМ — toggle Aim. Вызывается Input System после добавления action Aim в asset.</summary>
+        public void OnAim(InputAction.CallbackContext context)
+        {
+            if (context.started)
+            {
+                BufferAimToggle();
+            }
         }
 
         public void OnInteract(InputAction.CallbackContext context)

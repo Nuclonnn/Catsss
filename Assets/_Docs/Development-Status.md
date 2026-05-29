@@ -4,10 +4,11 @@
 
 | Поле | Значение |
 |------|----------|
-| **Текущий этап** | **Stage 3** — испытания + штрафы + UX (локализация, world hints, guest connect) |
+| **Текущий этап** | **Stage 4** ✅ MVP — бросок заряда, Aim, homing, попытки, telegraph |
+| **Следующий фокус** | **Stage 5** (level kit / барьеры) |
 | **Цель альфы** | Vertical slice одного уровня, 2 игрока по сети |
 | **Точка входа** | Сцена `MainMenu` → `Sandbox` |
-| **Последнее обновление** | Май 2026 — фаза B: `TrialBoundsZone`, командный штраф, телепорт |
+| **Последнее обновление** | Май 2026 — Stage 4.7 polish + документация |
 
 ---
 
@@ -24,7 +25,8 @@
 | Локализация RU/EN (String Table) | ✅ MainMenu + hints | `Localization-And-WorldHints.md` |
 | World-space подсказки (billboard, приоритеты) | ✅ MVP | `Localization-And-WorldHints.md` |
 | Guest connect с валидацией и возвратом в меню | ✅ | `MainMenu-And-Networking.md` |
-| Заряд-снаряд, level kit, мышь, сюжетные пилоны | ❌ Stages 4–7 | `Stage 4.md` … `Stage 7.md` |
+| Бросок заряда, Aim, homing, попытки, telegraph | ✅ Stage 4 MVP | `Stage 4.md` |
+| Level kit, антимаг, сюжетные пилоны | ❌ Stages 5–7 | `Stage 5.md` … `Stage 7.md` |
 
 ---
 
@@ -102,7 +104,23 @@
 | Мир | `TrialPylonStart`, `TrialFinishZone`, `TrialBoundsZone`, `TrialSessionRegistry`, `TrialPenaltyReason` |
 | UX | `InteractableOutlineRendererFeature`, `WorldTextHintPresenter`, `InteractionPromptView` |
 
-**Stage 3 закрыт для альфы** (gameplay loop). **Не сделано (фаза C / другие этапы):** `ChargedState` в FSM, UI таймера заряда, сетевой VFX, `ChargeSource` (Stage 4), антимаг (Stage 5), сюжетные пилоны Stage 7.
+**Stage 3 закрыт для альфы** (gameplay loop).
+
+## Этап 4 — бросок заряда (кратко)
+
+Подробно: **`Stage 4.md`**.
+
+**Цикл:** ПКМ Aim → луч прицела → ЛКМ бросок → `ChargeProjectile` (server homing) → catch / miss / лимит попыток.  
+**Не сделано / отложено:** отдельная Aim-камера (4.6), пульсирующий telegraph-VFX, `ChargeSource`, антимаг.
+
+| Область | Ключевые типы |
+|--------|----------------|
+| Aim | `PlayerAimController`, `PlayerThrowDirectionResolver`, `PlayerAimVisualsPresenter` |
+| Снаряд | `ChargeProjectile`, `ProjectileTrajectorySimulator` |
+| Сеть / UX | `PlayerIncomingChargeIndicator`, `ProjectileThrowSignals` |
+| Данные | `GameConfig.Projectile`, `ChargeTypeDefinition` (attempts, cooldown) |
+
+**Stage 4 MVP закрыт.** **Не сделано (другие этапы):** `ChargedState` в FSM, UI таймера, полноценный VFX/AUDIO telegraph, антимаг (Stage 5).
 
 ---
 
@@ -147,4 +165,4 @@
 
 ---
 
-*Следующий логический шаг: **Stage 4** (метание заряда, `ChargeProjectile`) или полировка фазы C Stage 3 (UI таймера, VFX заряда).*
+*Следующий логический шаг: **Stage 5** (`Stage 5.md`). Опционально: UI таймера заряда, polish VFX telegraph.*
