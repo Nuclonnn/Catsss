@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Catsss.Charges.Projectile;
 using Catsss.Configs.Charge;
 using Catsss.Core.Events;
 using Catsss.Core.Services;
@@ -18,9 +19,11 @@ namespace Catsss.Trials
     {
         [SerializeField] private GameplayContentCatalog contentCatalog;
         [SerializeField] private TrialProgressEventChannel trialProgressChannel;
+        [SerializeField] private bool enableThrowAttemptsDebugLogs;
 
         private readonly HashSet<int> _completedTrialIds = new();
         private readonly HashSet<int> _activeTrialIds = new();
+        private readonly Dictionary<int, int> _attemptsLeftByTrial = new();
         private readonly List<TrialPylonStart> _registeredPylons = new();
 
         public GameplayContentCatalog ContentCatalog => contentCatalog;
@@ -95,8 +98,50 @@ namespace Catsss.Trials
             }
 
             _activeTrialIds.Add(trialId);
+            InitializeThrowAttemptsForTrial(trialId, trial.ChargeTypeId);
             RaiseTrialProgress(trialId, TrialProgressPhase.Started);
             return true;
+        }
+
+        /// <summary>
+        /// Сервер: учесть один промах. true = лимит исчерпан → штраф без возврата заряда.
+        /// </summary>
+        public bool TryRegisterThrowMissServer(int trialId)
+        {
+            if (!IsServer || trialId <= 0 || !_activeTrialIds.Contains(trialId))
+            {
+                return false;
+            }
+
+            byte chargeTypeId = ResolveChargeTypeIdForTrial(trialId);
+            int maxAttempts = ResolveMaxThrowAttempts(chargeTypeId);
+
+            if (!_attemptsLeftByTrial.ContainsKey(trialId))
+            {
+                InitializeThrowAttemptsForTrial(trialId, chargeTypeId);
+            }
+
+            int remainingAfterMiss = ConsumeThrowAttempt(trialId, maxAttempts);
+            ProjectileThrowSignals.RaiseThrowAttemptsChanged(trialId, remainingAfterMiss, maxAttempts);
+
+            if (enableThrowAttemptsDebugLogs)
+            {
+                Debug.Log(
+                    $"[TrialSessionRegistry] Throw miss trialId={trialId}, attemptsLeft={remainingAfterMiss}/{maxAttempts}",
+                    this);
+            }
+
+            return remainingAfterMiss <= 0;
+        }
+
+        public int GetThrowAttemptsRemaining(int trialId)
+        {
+            if (trialId <= 0)
+            {
+                return 0;
+            }
+
+            return _attemptsLeftByTrial.TryGetValue(trialId, out int left) ? left : 0;
         }
 
         /// <summary>Финиш зоны: снять заряд у носителя, выдать перманент всем, закрыть испытание.</summary>
@@ -130,6 +175,7 @@ namespace Catsss.Trials
 
             _activeTrialIds.Remove(trialId);
             _completedTrialIds.Add(trialId);
+            ClearThrowAttemptsForTrial(trialId);
 
             NotifyTrialObjectsCompleted(trialId);
             RaiseTrialProgress(trialId, TrialProgressPhase.Completed);
@@ -166,6 +212,8 @@ namespace Catsss.Trials
                 return;
             }
 
+            ClearThrowAttemptsForTrial(trialId);
+            ChargeProjectile.AbortAllForTrialServer(trialId);
             ForPylonsWithTrialId(trialId, static pylon => pylon.ResetTrialActiveServer());
             RaiseTrialProgress(trialId, TrialProgressPhase.Cancelled);
         }
@@ -180,7 +228,9 @@ namespace Catsss.Trials
                 return;
             }
 
+            ChargeProjectile.AbortAllForTrialServer(trialId);
             _activeTrialIds.Remove(trialId);
+            ClearThrowAttemptsForTrial(trialId);
 
             if (!TryResolvePenaltySpawn(trialId, out Vector3 spawnPosition, out Quaternion spawnRotation))
             {
@@ -281,6 +331,8 @@ namespace Catsss.Trials
             int[] activeTrials = new int[_activeTrialIds.Count];
             _activeTrialIds.CopyTo(activeTrials);
 
+            HashSet<ulong> restoredThrowerIds = ChargeProjectile.AbortAllInFlightOnDisconnectServer(clientId);
+
             Debug.Log(
                 $"[TrialSessionRegistry] Client {clientId} disconnected — сброс активных trials: {string.Join(", ", activeTrials)}",
                 this);
@@ -290,10 +342,56 @@ namespace Catsss.Trials
                 CancelActiveTrial(trialId);
             }
 
-            ClearAllPlayerChargesServer();
+            ClearAllPlayerChargesServer(restoredThrowerIds);
         }
 
-        private void ClearAllPlayerChargesServer()
+        private void InitializeThrowAttemptsForTrial(int trialId, byte chargeTypeId)
+        {
+            int maxAttempts = ResolveMaxThrowAttempts(chargeTypeId);
+            _attemptsLeftByTrial[trialId] = maxAttempts;
+            ProjectileThrowSignals.RaiseThrowAttemptsChanged(trialId, maxAttempts, maxAttempts);
+        }
+
+        private int ResolveMaxThrowAttempts(byte chargeTypeId)
+        {
+            if (chargeTypeId != 0
+                && contentCatalog != null
+                && contentCatalog.ChargeTypes != null
+                && contentCatalog.ChargeTypes.TryGet(chargeTypeId, out ChargeTypeDefinition definition))
+            {
+                int configured = definition.MaxThrowAttemptsPerTrial;
+                return configured > 0 ? configured : 3;
+            }
+
+            return 3;
+        }
+
+        private byte ResolveChargeTypeIdForTrial(int trialId)
+        {
+            TrialDefinition resolved = null;
+            ForPylonsWithTrialId(trialId, pylon => resolved = pylon.TrialDefinition);
+
+            return resolved != null ? resolved.ChargeTypeId : (byte)0;
+        }
+
+        private int ConsumeThrowAttempt(int trialId, int maxAttempts)
+        {
+            if (!_attemptsLeftByTrial.TryGetValue(trialId, out int left))
+            {
+                left = maxAttempts;
+            }
+
+            left = Mathf.Max(0, left - 1);
+            _attemptsLeftByTrial[trialId] = left;
+            return left;
+        }
+
+        private void ClearThrowAttemptsForTrial(int trialId)
+        {
+            _attemptsLeftByTrial.Remove(trialId);
+        }
+
+        private void ClearAllPlayerChargesServer(HashSet<ulong> skipClientIds = null)
         {
             NetworkManager networkManager = NetworkManager.Singleton;
 
@@ -305,6 +403,11 @@ namespace Catsss.Trials
             foreach (NetworkClient client in networkManager.ConnectedClientsList)
             {
                 if (client.PlayerObject == null)
+                {
+                    continue;
+                }
+
+                if (skipClientIds != null && skipClientIds.Contains(client.ClientId))
                 {
                     continue;
                 }

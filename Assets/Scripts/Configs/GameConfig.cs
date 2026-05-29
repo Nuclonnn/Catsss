@@ -7,5 +7,6 @@ namespace Catsss.Configs
     {
         [field: SerializeField] public PlayerMovementSettings PlayerMovement { get; private set; } = new();
         [field: SerializeField] public PhysicsSettings Physics { get; private set; } = new();
+        [field: SerializeField] public ProjectileSettings Projectile { get; private set; } = new();
     }
 }

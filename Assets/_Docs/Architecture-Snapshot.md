@@ -4,7 +4,7 @@
 
 | Последнее обновление | Май 2026 |
 |---------------------|----------|
-| Текущий фокус | Stage 3 (испытания + штрафы) + локализация + world hints |
+| Текущий фокус | Stage 4 MVP (Aim + снаряд); далее Stage 5 |
 
 ---
 
@@ -16,7 +16,8 @@
 | `Scripts/Network/` | NGO, UTP, session starter, **ClientConnectInputValidator** |
 | `Scripts/Menu/` | MainMenu UI, intent, overlay, **MenuConnectionFeedback** |
 | `Scripts/Player/` | Контроллер, FSM, ввод, камера, interaction, trial interactor |
-| `Scripts/Charges/` | Временные заряды, перманентные модификаторы |
+| `Scripts/Charges/` | Временные заряды, снаряд (`Projectile/`), перманентные модификаторы |
+| `Scripts/Player/Aim/` | Aim mode, траектория, направление броска |
 | `Scripts/Trials/` | Пилоны, зона bounds, реестр, штрафы |
 | `Scripts/Interaction/` | `IInteractable`, промпт (через world hints) |
 | `Scripts/Rendering/` | URP outline для фокуса взаимодействия |
@@ -112,6 +113,31 @@ TrialFinishZone → CompleteTrial
 
 ---
 
+## Снаряд и Aim Mode (Stage 4)
+
+```
+PlayerAimController (owner, IsAiming)
+    → PlayerThrowDirectionResolver (viewport ray, cached after Cinemachine)
+    → LMB → ThrowChargeServerRpc → ChargeProjectile.InitializeServer + Spawn
+
+ChargeProjectile (server, FixedUpdate)
+    → homing → catch: catcher.TryApplyChargeWithRemainingServer (full duration)
+    → miss: TrialSessionRegistry.TryRegisterThrowMissServer
+    → PlayerIncomingChargeIndicator на цели (NetworkVariable thrower id)
+
+ApplyTeamTrialPenalty / CancelActiveTrial / disconnect
+    → ChargeProjectile.AbortAll* (без miss или restore snapshot на disconnect)
+```
+
+- Направление броска **не** `camera.forward` — `PlayerThrowDirectionResolver`.
+- Визуал прицела: `PlayerAimVisualsPresenter` после `CinemachineCore.CameraUpdatedEvent`.
+- `ProjectileThrowSignals` — Aim, incoming telegraph, attempts (для UI/VFX/Audio).
+- **4.6** отдельная Aim-камера — не реализована.
+
+Подробнее: **`Stage 4.md`**.
+
+---
+
 ## Локализация (`Scripts/Core/Localization/`)
 
 | Тип | Роль |
@@ -159,6 +185,8 @@ Interaction reuse: `InteractionPromptView` : `WorldTextHintView`.
 | `Catsss.Menu` | MainMenu flow |
 | `Catsss.Player` | Player controller, states, camera |
 | `Catsss.Charges` | Charge + permanent modifiers |
+| `Catsss.Charges.Projectile` | Снаряд, telegraph, throw signals |
+| `Catsss.Player.Aim` | Aim controller, trajectory, throw direction |
 | `Catsss.Trials` | Trial pylons, bounds, registry, penalty reasons |
 | `Catsss.Interaction` | Interactable contract, prompt settings |
 | `Catsss.Rendering` | URP features |
@@ -175,4 +203,5 @@ Interaction reuse: `InteractionPromptView` : `WorldTextHintView`.
 | `MainMenu-And-Networking.md` | Сеть, меню, тесты |
 | `Localization-And-WorldHints.md` | RU/EN, подсказки |
 | `Stage 3.md` | Trials MVP + настройка Unity |
+| `Stage 4.md` | Aim + бросок + настройка Unity |
 | `Onboarding.md` | Первый день в проекте |

@@ -1,3 +1,5 @@
+using Catsss.Configs;
+using Catsss.Player.Aim;
 using Unity.Netcode;
 using Unity.Cinemachine;
 using Unity.Cinemachine.TargetTracking;
@@ -5,6 +7,7 @@ using UnityEngine;
 
 namespace Catsss.Player
 {
+    /// <summary>Орбитальная камера. После Cinemachine кэширует направление прицела для броска.</summary>
     public sealed class PlayerCameraController : NetworkBehaviour
     {
         [Header("References")]
@@ -18,6 +21,13 @@ namespace Catsss.Player
         [SerializeField] private Transform target;
 
         public Camera UnityCamera => unityCamera;
+
+        public CinemachineBrain CinemachineBrain => cinemachineBrain;
+
+        /// <summary>Направление прицела после последнего тика Cinemachine (для броска в Update).</summary>
+        public Vector3 CachedAimDirection { get; private set; } = Vector3.forward;
+
+        public bool HasCachedAimDirection { get; private set; }
 
         [Header("Cinemachine Defaults")]
         [SerializeField] private bool applyOrbitalDefaultsOnSpawn = true;
@@ -79,6 +89,16 @@ namespace Catsss.Player
             {
                 target = playerController != null ? playerController.transform : transform;
             }
+        }
+
+        private void OnEnable()
+        {
+            CinemachineCore.CameraUpdatedEvent.AddListener(OnCinemachineCameraUpdated);
+        }
+
+        private void OnDisable()
+        {
+            CinemachineCore.CameraUpdatedEvent.RemoveListener(OnCinemachineCameraUpdated);
         }
 
         public override void OnNetworkSpawn()
@@ -190,6 +210,36 @@ namespace Catsss.Player
                 orbitalFollow.VerticalAxis.Range.x,
                 orbitalFollow.VerticalAxis.Range.y);
         }
+
+        /// <summary>Вызывать после Cinemachine — кэш совпадает с кадром рендера.</summary>
+        public void RefreshAimDirectionCache(Vector3 throwOriginWorld, ProjectileSettings projectileSettings, Transform ignoreRoot)
+        {
+            if (unityCamera == null)
+            {
+                HasCachedAimDirection = false;
+                return;
+            }
+
+            CachedAimDirection = PlayerThrowDirectionResolver.Resolve(
+                unityCamera,
+                throwOriginWorld,
+                projectileSettings,
+                ignoreRoot);
+            HasCachedAimDirection = true;
+        }
+
+        private void OnCinemachineCameraUpdated(CinemachineBrain brain)
+        {
+            if (!IsOwner || brain != cinemachineBrain || unityCamera == null)
+            {
+                return;
+            }
+
+            AimDirectionUpdated?.Invoke();
+        }
+
+        /// <summary>Срабатывает после обновления Output Camera (Cinemachine).</summary>
+        public event System.Action AimDirectionUpdated;
 
         private void SetCameraActive(bool isActive)
         {

@@ -30,3 +30,20 @@ MonoBehaviour:
   <Physics>k__BackingField:
     customGravityMultiplier: 2.5
     fallRespawnY: -10
+  <Projectile>k__BackingField:
+    spawnForwardOffset: 0.75
+    throwSpeed: 12
+    homingTurnSpeedDegPerSec: 110
+    maxLifetime: 4
+    aimViewportX: 0.5
+    aimViewportY: 0.65
+    aimRayMaxDistance: 80
+    aimRayMinDistance: 0.75
+    aimRayFallbackDistance: 40
+    aimSkyAimRayUpThreshold: 0.12
+    aimRayLayerMask:
+      serializedVersion: 2
+      m_Bits: 119
+    drawAimDirectionDebug: 1
+    trajectorySimulationSteps: 40
+    trajectorySimulationStep: 0.05

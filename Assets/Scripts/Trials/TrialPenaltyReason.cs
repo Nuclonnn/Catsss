@@ -6,5 +6,6 @@ namespace Catsss.Trials
         None = 0,
         LeftTrialBounds = 1,
         ChargeTimerExpired = 2,
+        MissedTooManyTimes = 3,
     }
 }

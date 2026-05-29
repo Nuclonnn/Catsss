@@ -26,6 +26,7 @@ namespace Catsss.Trials
         private readonly NetworkVariable<bool> _isTrialActive = new();
 
         public int TrialId => trial != null ? trial.TrialId : 0;
+        public TrialDefinition TrialDefinition => trial;
         public Transform PenaltyRespawnPoint => penaltyRespawnPoint != null ? penaltyRespawnPoint : transform;
 
         public Transform PromptAnchor => promptAnchor != null ? promptAnchor : transform;
