@@ -15,6 +15,7 @@ namespace Catsss.Player
     [RequireComponent(typeof(PlayerChargeController))]
     [RequireComponent(typeof(PlayerPermanentModifiers))]
     [RequireComponent(typeof(PlayerTrialInteractor))]
+    [RequireComponent(typeof(AeroZoneReceiver))]
     public sealed class NetworkPlayerController : NetworkBehaviour
     {
         [Header("Config")]
@@ -50,8 +51,10 @@ namespace Catsss.Player
         private readonly CooldownTimer _dashDurationTimer = new(0f);
         private readonly GracePeriodTimer _coyoteTimer = new();
         private Rigidbody _rigidbody;
+        private MovingPlatformRider _platformRider;
         private PlayerChargeController _chargeController;
         private PlayerPermanentModifiers _permanentModifiers;
+        private AeroZoneReceiver _aeroZoneReceiver;
         private Vector2 _moveInput;
         private float _verticalVelocity;
         private bool _jumpHeld;
@@ -122,8 +125,10 @@ namespace Catsss.Player
             }
 
             _rigidbody = GetComponent<Rigidbody>();
+            _platformRider = GetComponent<MovingPlatformRider>();
             _chargeController = GetComponent<PlayerChargeController>();
             _permanentModifiers = GetComponent<PlayerPermanentModifiers>();
+            _aeroZoneReceiver = GetComponent<AeroZoneReceiver>();
             _rigidbody.freezeRotation = true;
             _rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
             _rigidbody.useGravity = false;
@@ -200,6 +205,7 @@ namespace Catsss.Player
             }
 
             _stateMachine.FixedUpdate();
+            ApplyWindInfluence();
         }
 
         public bool CanStartJump()
@@ -326,7 +332,7 @@ namespace Catsss.Player
                 moveSpeed *= Movement.postDashSprintSpeedMultiplier;
             }
 
-            Vector3 targetVelocity = MoveDirection * moveSpeed;
+            Vector3 targetVelocity = MoveDirection * moveSpeed + GetPlatformCarryVelocity();
             Vector3 currentVelocity = _rigidbody.linearVelocity;
             Vector3 currentHorizontalVelocity = new(currentVelocity.x, 0f, currentVelocity.z);
             Vector3 nextHorizontalVelocity = Vector3.MoveTowards(
@@ -375,13 +381,58 @@ namespace Catsss.Player
         {
             _dashDurationTimer.Tick(Time.fixedDeltaTime);
             Vector3 dashDirection = MoveDirection.sqrMagnitude > 0.001f ? MoveDirection : transform.forward;
-            Vector3 velocity = dashDirection * Movement.baseSpeed * Movement.dashSpeedMultiplier;
+            Vector3 velocity = dashDirection * Movement.baseSpeed * Movement.dashSpeedMultiplier + GetPlatformCarryVelocity();
 
             // На земле сохраняем «прилипание» из вертикальной логики; в воздухе Vy фиксируем — только гравитация после выхода из дэша.
             float vertical = _currentDashStartedAirborne ? 0f : _verticalVelocity;
             _rigidbody.linearVelocity = new Vector3(velocity.x, vertical, velocity.z);
 
             RotateTowards(dashDirection);
+        }
+
+        /// <summary>
+        /// Ветер из AeroZone: target velocity + опциональная вертикальная пружина (equilibrium).
+        /// Вызывается после FSM, в том числе во время Dash.
+        /// </summary>
+        public void ApplyWindInfluence()
+        {
+            if (_aeroZoneReceiver == null)
+            {
+                return;
+            }
+
+            Vector3 velocity = _rigidbody.linearVelocity;
+            AeroZoneWindInfluence wind = _aeroZoneReceiver.SampleWindInfluence(velocity);
+
+            if (!wind.HasInfluence)
+            {
+                return;
+            }
+
+            float deltaTime = Time.fixedDeltaTime;
+            Vector3 targetVelocity = wind.TargetVelocity;
+
+            if (_isGrounded && _platformRider != null && _platformRider.IsRidingPlatform)
+            {
+                targetVelocity += _platformRider.PlatformHorizontalVelocity;
+            }
+
+            Vector3 nextVelocity = Vector3.MoveTowards(
+                velocity,
+                targetVelocity,
+                wind.ApproachAcceleration * deltaTime);
+
+            if (wind.HasEquilibrium)
+            {
+                _verticalVelocity += wind.EquilibriumVerticalAcceleration * deltaTime;
+                nextVelocity.y = _verticalVelocity;
+            }
+            else
+            {
+                _verticalVelocity = nextVelocity.y;
+            }
+
+            _rigidbody.linearVelocity = nextVelocity;
         }
 
         private void BuildStateMachine()
@@ -502,6 +553,19 @@ namespace Catsss.Player
             right.Normalize();
 
             return Vector3.ClampMagnitude(forward * rawDirection.z + right * rawDirection.x, 1f);
+        }
+
+        /// <summary>
+        /// На платформе целевая скорость включает движение платформы — иначе контроллер «тормозит» относительно неё.
+        /// </summary>
+        private Vector3 GetPlatformCarryVelocity()
+        {
+            if (!_isGrounded || _platformRider == null || !_platformRider.IsRidingPlatform)
+            {
+                return Vector3.zero;
+            }
+
+            return _platformRider.PlatformHorizontalVelocity;
         }
 
         private void RotateTowards(Vector3 direction)

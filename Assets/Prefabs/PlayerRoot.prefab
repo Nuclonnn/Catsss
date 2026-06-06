@@ -25,10 +25,11 @@ GameObject:
   - component: {fileID: 792778463644005912}
   - component: {fileID: 8827364519283746501}
   - component: {fileID: 2965538478771083136}
-  - component: {fileID: 240361011527183484}
+  - component: {fileID: 6472170200028136164}
   - component: {fileID: 1769914365722636256}
   - component: {fileID: 903017741045293441}
   - component: {fileID: 7693943663814917226}
+  - component: {fileID: 5116297686029870673}
   m_Layer: 7
   m_Name: PlayerRoot
   m_TagString: Player
@@ -58,6 +59,7 @@ Transform:
   - {fileID: 5940899429017022105}
   - {fileID: 1602370910575764870}
   - {fileID: 8966724065282135886}
+  - {fileID: 1506210048717824635}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6056505181536712512
@@ -72,7 +74,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2532965111
+  GlobalObjectIdHash: 2739211618
   InScenePlacedSourceGlobalObjectIdHash: 2739211618
   DeferredDespawnTick: 0
   Ownership: 1
@@ -154,7 +156,7 @@ Rigidbody:
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 32
   m_CollisionDetection: 2
@@ -272,7 +274,7 @@ MonoBehaviour:
   target: {fileID: 4905927505065534355}
   applyOrbitalDefaultsOnSpawn: 1
   targetOffset: {x: 0, y: 1.35, z: 0}
-  orbitRadius: 5
+  orbitRadius: 7
   positionDamping: {x: 0.15, y: 0.25, z: 0.15}
   verticalRange: {x: -80, y: 80}
   initialVerticalAngle: 20
@@ -400,7 +402,7 @@ MonoBehaviour:
   chargeProjectilePrefab: {fileID: 4880435861448083347, guid: 8eee2f3ddee6318418c3252684ef67ae, type: 3}
   maxOriginDistanceFromPlayer: 3
   enableDebugLogs: 1
---- !u!114 &240361011527183484
+--- !u!114 &6472170200028136164
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -409,11 +411,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 1082306502718669513}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 70dbfef4ea32f3848a0942cba2df151e, type: 3}
+  m_Script: {fileID: 11500000, guid: a1b2c3d4e5f6478990abcdef1234560c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Catsss.Player.Aim.PlayerAimDebugLog
+  m_EditorClassIdentifier: Assembly-CSharp::Catsss.Player.MovingPlatformRider
   ShowTopMostFoldoutHeaderGroup: 1
-  aimController: {fileID: 2965538478771083136}
+  feetProbe: {fileID: 0}
+  probeDistance: 0.65
+  platformMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  topContactNormalThreshold: 0.5
+  drawDebug: 1
 --- !u!114 &1769914365722636256
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -464,6 +472,21 @@ MonoBehaviour:
   incomingEmissionTint: {r: 0.45, g: 0.35, b: 0.9, a: 1}
   incomingEmissionIntensity: 0.35
   logStateChanges: 0
+--- !u!114 &5116297686029870673
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1082306502718669513}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6239d52f74f21764c90beb479eb0e73f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Catsss.Player.AeroZoneReceiver
+  ShowTopMostFoldoutHeaderGroup: 1
+  drawWindDebug: 0
+  windDebugColor: {r: 0.3, g: 0.9, b: 1, a: 0.95}
 --- !u!1 &2200417384903827779
 GameObject:
   m_ObjectHideFlags: 0
@@ -731,7 +754,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3994947839914449524}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.115686975, y: -0.000019076035, z: 0.0000022217662, w: 0.9932858}
+  m_LocalRotation: {x: 0.115686975, y: -0.000019327876, z: 0.0000022510978, w: 0.9932858}
   m_LocalPosition: {x: 0, y: 1.8535291, z: -4.7685847}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1048,7 +1071,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 1.2}
   m_SizeDelta: {x: 200, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!223 &3575159787210690661
@@ -1171,7 +1194,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4403127246952841922}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.115686975, y: -0.000019076035, z: 0.0000022217662, w: 0.9932858}
+  m_LocalRotation: {x: 0.115686975, y: -0.000019327876, z: 0.0000022510978, w: 0.9932858}
   m_LocalPosition: {x: 0, y: 1.8535291, z: -4.7685847}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1717,6 +1740,37 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.9
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &7386391246061111043
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1506210048717824635}
+  m_Layer: 7
+  m_Name: PlatformRider
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1506210048717824635
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7386391246061111043}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1001555082680445238}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8971549044473439231
 GameObject:
   m_ObjectHideFlags: 0

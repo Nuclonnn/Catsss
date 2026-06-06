@@ -23,5 +23,7 @@ MonoBehaviour:
   suppressJump: 0
   isHeavy: 0
   heavyGravityMultiplier: 2.5
+  isAir: 0
+  airWindSpeedMultiplier: 2.5
   auraColor: {r: 0, g: 1, b: 1, a: 1}
   vfxPrefab: {fileID: 0}

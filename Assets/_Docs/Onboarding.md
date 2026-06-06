@@ -62,8 +62,10 @@
 |---------|------|
 | 1 | `Development-Status.md` — что работает **сейчас** |
 | 2 | `Architecture-Snapshot.md` — структура папок и namespaces |
-| 3 | `Stage 3.md` — текущий этап (trials MVP) |
-| 4 | `DevLog.md` — что менялось недавно |
+| 3 | `Stage 4.md` — бросок заряда (закрыт MVP) |
+| 4 | `Stage 5.md` — level kit (закрыт MVP) |
+| 5 | `Stage 6.md` / `Stage 7.md` — **следующие этапы** |
+| 6 | `DevLog.md` — что менялось недавно |
 
 ### 2. Запустить проект
 
@@ -73,17 +75,15 @@
 
 Подробнее: **`MainMenu-And-Networking.md`**.
 
-### 3. Текущий этап — Stage 3
+### 3. Этапы: что закрыто / что сейчас
 
-**Закрыто (MVP):**
+**Stage 3 ✅:** пилон → заряд → финиш → перманент; штрафы bounds/таймер; E + outline; локализация; guest connect.
 
-- Испытание: пилон → заряд → финиш → перманент всей команде.
-- Взаимодействие E + URP outline.
-- Локализация RU/EN (меню + hints).
-- World-space подсказки на игроке.
-- Guest connect с валидацией.
+**Stage 4 ✅ (MVP):** ПКМ Aim, ЛКМ throw, `ChargeProjectile`, homing, попытки, telegraph.
 
-**Не начато:** Stages 4–7 (метание заряда, level kit, мышь, сюжетные пилоны).
+**Stage 5 ✅ (MVP):** level kit — MagicSeal, KinematicPlatform, AntiMagicZone, AeroZone. Ветка **`Stage-5`**.
+
+**Не начато:** Stage 6–7 (сюжетные пилоны, мышь).
 
 ### 4. Специализированные гайды
 
@@ -112,8 +112,10 @@ Assets/Scripts/
 ├── Network/       ConnectionManager, SessionStarter, Validator
 ├── Menu/          MainMenuController, Intent, Overlay
 ├── Player/        Controller, FSM states, Camera, Interaction
-├── Charges/       ChargeController, PermanentModifiers
+├── Player/Aim/    Aim, trajectory, throw direction
+├── Charges/       ChargeController, Projectile/, PermanentModifiers
 ├── Trials/        Pylons, Registry, TrialDefinition
+├── LevelKit/      MagicSeal, KinematicPlatform, AntiMagicZone, AeroZone
 ├── Interaction/   IInteractable, PromptSettings
 ├── Rendering/     URP outline feature
 └── Configs/       GameConfig, charge catalogs
@@ -126,6 +128,6 @@ Assets/Scripts/
 - **Программист (Cursor):** скрипты, архитектура, документация `_Docs/`.
 - **Unity (ты):** сцены, prefab wiring, Build Settings, URP, тест в Play Mode.
 - **Итерации:** маленький кусок → сборка → правка → следующий этап.
-- **Git:** feature-ветки (не `main`); коммиты — по запросу.
+- **Git:** feature-ветки (`stage4/logic`, `Stage-5`, не только `main`); коммиты — по запросу.
 
 После значимых изменений обновляй **`Development-Status.md`** и добавляй запись в **`DevLog.md`**.

@@ -225,11 +225,13 @@ PylonStartRoot     NetworkObject, BoxCollider, TrialPylonStart
 | **A** | Пилон → заряд → финиш → перманент всем, UX (промпт, контур) | ✅ |
 | **A+** | Локализация RU/EN, world hints, guest connect validation | ✅ |
 | **B** | `TrialBoundsZone`, командный штраф, телепорт на `penaltyRespawnPoint`, отмена trial | ✅ |
-| **C** | UI таймера заряда, сетевой VFX заряда, `ChargeSource` (Stage 4), антимаг-зоны (Stage 5) | ❌ |
+| **C** | UI таймера заряда, сетевой VFX заряда | ❌ |
+| **Stage 4** | Бросок заряда, Aim, homing | ✅ см. `Stage 4.md` |
+| **Stage 5** | Level kit (печати, платформы, антимаг, ветер) | ✅ см. `Stage 5.md` |
 | **Stage 7** | Сюжетные пилоны-ловушки, `GameFlowManager`, погоня мыши | ❌ |
 
 См. также: `Stage 7.md` (задача 7.1), `GDD.md` (прогрессия через пилоны), `Development-Status.md`, `Architecture-Snapshot.md`, `Localization-And-WorldHints.md`, `MainMenu-And-Networking.md`.
 
 ---
 
-*Последнее обновление: фаза B — командные штрафы (`TrialBoundsZone`, таймер), телепорт на чекпоинт; Stage 3 gameplay loop закрыт для альфы (без VFX/ChargeSource).*
+*Последнее обновление: Stage 3–5 закрыты для альфы (MVP). Следующий фокус — **Stage 6 / Stage 7**.*
