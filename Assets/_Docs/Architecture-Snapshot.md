@@ -4,7 +4,7 @@
 
 | Последнее обновление | Май 2026 |
 |---------------------|----------|
-| Текущий фокус | Stage 4 MVP (Aim + снаряд); далее Stage 5 |
+| Текущий фокус | **Stage 5** ✅ MVP; следующий — **Stage 6 / Stage 7** |
 
 ---
 
@@ -13,19 +13,20 @@
 | Область | Назначение |
 |--------|-------------|
 | `Scripts/Core/` | FSM, Events, Services, Timing, **Localization**, **WorldHints** |
-| `Scripts/Network/` | NGO, UTP, session starter, **ClientConnectInputValidator** |
+| `Scripts/Network/` | NGO, UTP, session starter, **ServerNetworkTransform**, **ClientConnectInputValidator** |
 | `Scripts/Menu/` | MainMenu UI, intent, overlay, **MenuConnectionFeedback** |
-| `Scripts/Player/` | Контроллер, FSM, ввод, камера, interaction, trial interactor |
-| `Scripts/Charges/` | Временные заряды, снаряд (`Projectile/`), перманентные модификаторы |
-| `Scripts/Player/Aim/` | Aim mode, траектория, направление броска |
+| `Scripts/Player/` | Контроллер, FSM, ввод, камера, interaction, **`AeroZoneReceiver`** |
+| `Scripts/Player/Aim/` | Aim mode, траектория, `PlayerThrowDirectionResolver` |
+| `Scripts/Charges/` | Заряды, **`Charges/Projectile/`**, перманентные модификаторы |
 | `Scripts/Trials/` | Пилоны, зона bounds, реестр, штрафы |
+| `Scripts/LevelKit/` | **Stage 5 ✅:** MagicSeal, KinematicPlatform, AntiMagicZone, AeroZone |
 | `Scripts/Interaction/` | `IInteractable`, промпт (через world hints) |
 | `Scripts/Rendering/` | URP outline для фокуса взаимодействия |
 | `Scripts/Configs/` | `GameConfig`, каталоги зарядов/перманентов |
-| `Scripts/Editor/` | Bootstrap локализации, world hints, scene wiring |
+| `Scripts/Editor/` | Bootstrap локализации, world hints, KinematicPlatform gizmo |
 | `Localization/` | Unity Localization: locales, `UI_Strings` |
 | `Configs/` | SO: GameConfig, Trials, AllBaffs, **WorldHints** |
-| `Prefabs/` | PlayerRoot, PylonStart/End, **WorldTextHintTriggerRoot** |
+| `Prefabs/` | PlayerRoot, PylonStart/End, **LevelKit/**, **WorldTextHintTriggerRoot** |
 | `Scenes/` | **MainMenu** (вход), **Sandbox** (геймплей) |
 | `_Docs/` | Документация проекта |
 
@@ -113,7 +114,7 @@ TrialFinishZone → CompleteTrial
 
 ---
 
-## Снаряд и Aim Mode (Stage 4)
+## Снаряд и Aim Mode (Stage 4) ✅
 
 ```
 PlayerAimController (owner, IsAiming)
@@ -132,9 +133,57 @@ ApplyTeamTrialPenalty / CancelActiveTrial / disconnect
 - Направление броска **не** `camera.forward` — `PlayerThrowDirectionResolver`.
 - Визуал прицела: `PlayerAimVisualsPresenter` после `CinemachineCore.CameraUpdatedEvent`.
 - `ProjectileThrowSignals` — Aim, incoming telegraph, attempts (для UI/VFX/Audio).
+- Prefab: `ChargeProjectileRoot` в Network Prefabs.
 - **4.6** отдельная Aim-камера — не реализована.
 
 Подробнее: **`Stage 4.md`**.
+
+---
+
+## Level kit (Stage 5) ✅
+
+### MagicSeal (5.1) — server
+
+```
+MagicSeal (NetworkObject)
+    ← MagicSealInteractable (E) / MagicSealTriggerActivator (trigger)
+    → EmptyEventChannel (Pressed / Released / OneShot)
+    → MagicSealVisualStub (client)
+```
+
+Политики: Momentary, Toggle, OneShot. Требования: AnyPlayer, HeavyCharge, min players, AllConnectedPlayers.
+
+### KinematicPlatform (5.2) — server
+
+```
+EmptyEventChannel → KinematicPlatformSignalDriver → KinematicPlatform
+    → ServerNetworkTransform
+    ← MovingPlatformRider (owner on PlayerRoot)
+```
+
+Режимы: Cycle (Yoyo/Loop), SignalDriven, Resonance. Waypoints snapshot из `Path/Point_*` на spawn.
+
+### AntiMagicZone (5.3) — server
+
+```
+AntiMagicZone (trigger или solid collider)
+    → заряженный игрок в trial: TeleportFromServerClientRpc + TryRegisterThrowMissServer
+    → ChargeProjectile: TryHandleBarrierMissServer если BlocksProjectiles
+    ← AntiMagicZoneSignalDriver + ClientRpc (визуал)
+```
+
+`TrialPenaltyReason.AntiMagicZone` при исчерпании попыток.
+
+### AeroZone (5.4) — client (owner)
+
+```
+AeroZone (trigger) → AeroZoneReceiver (PlayerRoot) → NetworkPlayerController.ApplyWindInfluence()
+    ← AeroZoneSignalDriver + ClientRpc (визуал, IsZoneActive)
+```
+
+Модель: **target velocity**; updraft — **VerticalEquilibrium** (пружина). `IsHeavy` → 0; `IsAir` → multiplier.
+
+Подробнее: **`Stage 5.md`**.
 
 ---
 
@@ -188,6 +237,7 @@ Interaction reuse: `InteractionPromptView` : `WorldTextHintView`.
 | `Catsss.Charges.Projectile` | Снаряд, telegraph, throw signals |
 | `Catsss.Player.Aim` | Aim controller, trajectory, throw direction |
 | `Catsss.Trials` | Trial pylons, bounds, registry, penalty reasons |
+| `Catsss.LevelKit` | Stage 5 puzzle blocks: MagicSeal, KinematicPlatform, AntiMagicZone, AeroZone |
 | `Catsss.Interaction` | Interactable contract, prompt settings |
 | `Catsss.Rendering` | URP features |
 | `Catsss.Configs` | GameConfig, charge/trial data |
@@ -203,5 +253,7 @@ Interaction reuse: `InteractionPromptView` : `WorldTextHintView`.
 | `MainMenu-And-Networking.md` | Сеть, меню, тесты |
 | `Localization-And-WorldHints.md` | RU/EN, подсказки |
 | `Stage 3.md` | Trials MVP + настройка Unity |
-| `Stage 4.md` | Aim + бросок + настройка Unity |
+| `Stage 4.md` | Aim + бросок (закрыт MVP) |
+| `Stage 5.md` | Level kit (закрыт MVP) |
+| `Stage 6.md` / `Stage 7.md` | Следующие этапы |
 | `Onboarding.md` | Первый день в проекте |

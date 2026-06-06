@@ -32,6 +32,8 @@ namespace Catsss.Configs.Charge
         [SerializeField] private bool suppressJump;
         [SerializeField] private bool isHeavy;
         [Min(0.1f)] [SerializeField] private float heavyGravityMultiplier = 2.5f;
+        [SerializeField] private bool isAir;
+        [Min(0.1f)] [SerializeField] private float airWindSpeedMultiplier = 2.5f;
 
         [Header("Visual (заглушки для будущего VFX)")]
         [SerializeField] private Color auraColor = Color.cyan;
@@ -49,6 +51,8 @@ namespace Catsss.Configs.Charge
         public bool SuppressJump => suppressJump;
         public bool IsHeavy => isHeavy;
         public float HeavyGravityMultiplier => heavyGravityMultiplier;
+        public bool IsAir => isAir;
+        public float AirWindSpeedMultiplier => airWindSpeedMultiplier;
         public Color AuraColor => auraColor;
         public GameObject VfxPrefab => vfxPrefab;
 

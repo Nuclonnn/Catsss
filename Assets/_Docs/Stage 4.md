@@ -358,4 +358,4 @@ ChargeProjectile (server, FixedUpdate)
 
 ---
 
-*Следующий фокус: **Stage 5** (level kit / барьеры и т.д. по `Stage 5.md`).*
+*Stage 4 MVP закрыт. Level kit — **Stage 5.md** (закрыт MVP). Следующий фокус: **Stage 6 / Stage 7**.*

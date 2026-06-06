@@ -1,3 +1,5 @@
+**Статус:** ✅ Закрыт (NGO, client-auth движение, RPC-визуал). Меню/гость — `MainMenu-And-Networking.md`.
+
 ЭТАП 2: Базовый сетевой Игрок (Networked Locomotion)
 Цель: Настроить Netcode for GameObjects (NGO), собрать префаб игрока и реализовать Client-Authoritative передвижение с ручной синхронизацией визуала. Работаем в сцене Scene_Gym.
 Задача 2.1: Инициализация сети (Netcode + Relay)

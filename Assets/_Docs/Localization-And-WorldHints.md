@@ -2,7 +2,7 @@
 
 RU/EN через Unity Localization Package + единая система текстовых подсказок в world space.
 
-См. также: `Stage 3.md`, `Development-Status.md`, `Architecture-Snapshot.md`.
+См. также: `Stage 3.md`, `Stage 4.md`, `Stage 5.md`, `Development-Status.md`, `Architecture-Snapshot.md`.
 
 ---
 

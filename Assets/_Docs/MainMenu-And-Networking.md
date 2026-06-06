@@ -2,7 +2,7 @@
 
 Как устроен вход в игру, как тестировать мультиплеер и как работает защита от неверного ввода гостя.
 
-См. также: `Architecture-Snapshot.md`, `Development-Status.md`, `Stage 2.md`.
+См. также: `Architecture-Snapshot.md`, `Development-Status.md` (этапы 3–5), `Stage 2.md`.
 
 ---
 

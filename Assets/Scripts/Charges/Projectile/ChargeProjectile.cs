@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Catsss.Configs;
 using Catsss.Configs.Charge;
 using Catsss.Core.Services;
+using Catsss.LevelKit;
 using Catsss.Player;
 using Catsss.Player.Aim;
 using Catsss.Trials;
@@ -193,10 +194,31 @@ namespace Catsss.Charges.Projectile
                 Time.fixedDeltaTime);
         }
 
+        /// <summary>Сервер: промах от антимаг-барьера с BlocksProjectiles (как обычный environment miss).</summary>
+        public void TryHandleBarrierMissServer(string reason)
+        {
+            if (!IsServer || !_isInitialized || _resolutionHandled)
+            {
+                return;
+            }
+
+            HandleMissServer(reason);
+        }
+
         private void OnTriggerEnter(Collider other)
         {
             if (!IsServer || !_isInitialized || _resolutionHandled || other == null)
             {
+                return;
+            }
+
+            if (TryResolveAntiMagicZone(other, out AntiMagicZone antiMagicZone))
+            {
+                if (antiMagicZone.IsZoneActive && antiMagicZone.BlocksProjectiles)
+                {
+                    HandleMissServer("antiMagic");
+                }
+
                 return;
             }
 
@@ -475,8 +497,42 @@ namespace Catsss.Charges.Projectile
             return false;
         }
 
+        private void OnCollisionEnter(Collision collision)
+        {
+            if (!IsServer || !_isInitialized || _resolutionHandled || collision == null)
+            {
+                return;
+            }
+
+            Collider other = collision.collider;
+
+            if (other == null)
+            {
+                return;
+            }
+
+            if (TryResolveAntiMagicZone(other, out AntiMagicZone antiMagicZone)
+                && antiMagicZone.IsZoneActive
+                && antiMagicZone.BlocksProjectiles)
+            {
+                HandleMissServer("antiMagic");
+            }
+        }
+
+        private static bool TryResolveAntiMagicZone(Collider other, out AntiMagicZone zone)
+        {
+            zone = other.GetComponentInParent<AntiMagicZone>();
+            return zone != null;
+        }
+
         private static bool ShouldIgnoreCollider(Collider other)
         {
+            if (TryResolveAntiMagicZone(other, out AntiMagicZone antiMagicZone)
+                && (!antiMagicZone.IsZoneActive || !antiMagicZone.BlocksProjectiles))
+            {
+                return true;
+            }
+
             if (other.GetComponentInParent<TrialBoundsZone>() != null)
             {
                 return true;

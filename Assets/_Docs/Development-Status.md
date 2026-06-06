@@ -1,168 +1,140 @@
-# Catsss — текущее состояние разработки
-
-**Живой документ** для отслеживания того, что уже в репозитории, что воспроизводимо в редакторе, и что из официальных этапов (`Stage 1–7`) ещё не закрыто.
-
-| Поле | Значение |
-|------|----------|
-| **Текущий этап** | **Stage 4** ✅ MVP — бросок заряда, Aim, homing, попытки, telegraph |
-| **Следующий фокус** | **Stage 5** (level kit / барьеры) |
-| **Цель альфы** | Vertical slice одного уровня, 2 игрока по сети |
-| **Точка входа** | Сцена `MainMenu` → `Sandbox` |
-| **Последнее обновление** | Май 2026 — Stage 4.7 polish + документация |
-
----
-
-## Сводка: что работает сейчас
-
-| Область | Статус | Документ |
-|---------|--------|----------|
-| Архитектурное ядро (FSM, Events, ServiceLocator, Timing) | ✅ Stage 1 | `Architecture-Snapshot.md`, `Stage 1.md` |
-| NGO + UTP (IP/порт, без Relay) | ✅ Упрощённо | `MainMenu-And-Networking.md`, `Stage 2.md` |
-| Движение игрока (ходьба, прыжок, dash, камера) | ✅ MVP | `Development-Status.md` (ниже) |
-| Испытания: пилон → заряд → финиш → перманент | ✅ | `Stage 3.md` |
-| Штрафы испытания (bounds, таймер, командный телепорт) | ✅ | `Stage 3.md` |
-| Взаимодействие E + URP-контур | ✅ MVP | `Stage 3.md` |
-| Локализация RU/EN (String Table) | ✅ MainMenu + hints | `Localization-And-WorldHints.md` |
-| World-space подсказки (billboard, приоритеты) | ✅ MVP | `Localization-And-WorldHints.md` |
-| Guest connect с валидацией и возвратом в меню | ✅ | `MainMenu-And-Networking.md` |
-| Бросок заряда, Aim, homing, попытки, telegraph | ✅ Stage 4 MVP | `Stage 4.md` |
-| Level kit, антимаг, сюжетные пилоны | ❌ Stages 5–7 | `Stage 5.md` … `Stage 7.md` |
-
----
-
-## Главное меню и вход в сессию
-
-- Сцена **`MainMenu`**: **Хост** / **Гость** (IP + порт) / **Выход** — `MainMenuController`.
-- Локализованные тексты кнопок, плейсхолдеров, ошибок — `MainMenuLocalizedText` + String Table **`UI_Strings`**.
-- Перед загрузкой Sandbox — **`MenuLoadingOverlay`** (`DontDestroyOnLoad`).
-- Параметры сессии — статический **`NetworkSessionIntent`** (хост/клиент, порт, задержка оверлея).
-- На **`Sandbox`**: **`GameplayNetworkSessionStarter`** читает intent и вызывает `ConnectionManager.StartHost()` / `StartClient()`.
-- Dev-пути без меню: fallback-хост в Sandbox, CLI **`-join` / `-client`** (`DevelopmentJoinArgs`).
-- **`DevNetworkBootstrap`** не дублирует старт, если на сцене уже есть `GameplayNetworkSessionStarter`.
-- Транспорт: **Unity Transport (UTP)**, прямое **IP + порт**. Хост слушает **`0.0.0.0`** по умолчанию. **Unity Relay / join-код отложены** — для разных сетей: VPN (Hamachi) или проброс порта.
-
-### Защита guest connect (новое)
-
-Трёхслойная валидация **до** вызова UTP:
-
-1. **`MainMenuController`** — проверка IP/порта на GuestPanel; ошибка показывается **без загрузки Sandbox**.
-2. **`GameplayNetworkSessionStarter`** — повторная проверка intent; при ошибке — возврат в MainMenu через **`MenuConnectionFeedback`**.
-3. **`ConnectionManager.StartClient()`** — последний барьер; при невалидном адресе только `LogWarning`, без transport failure.
-
-Ключевые типы: **`ClientConnectInputValidator`**, **`ClientConnectInputError`**, **`MenuConnectionFeedback`**.
-
-Подробности: **`MainMenu-And-Networking.md`**.
-
----
-
-## Локализация и world hints (расширение Stage 3)
-
-- **Unity Localization Package**: таблица `UI_Strings`, локали **English** и **Russian (ru)**.
-- **`LocalizedTextReference`** — ссылка на строку + editor fallback; используется в UI и подсказках.
-- **`LocalizedUiText`** — статический текст на Canvas (кнопки, заголовки).
-- **`MainMenuLocalizedText`** — динамика: LAN IP-хинт для хоста, ошибки GuestPanel.
-- **World hints**: одна подсказка на игрока, billboard к камере, приоритет interaction (10) vs trigger (100+).
-- Editor bootstrap: **Catsss → Localization → …**, **Catsss → World Hints → …**.
-
-Подробности: **`Localization-And-WorldHints.md`**.
-
----
-
-## Движение игрока (проверенный MVP)
-
-Сценарий: владелец `PlayerRoot` после входа в сессию:
-
-- WASD относительно камеры, прыжок (coyote + input buffer), кастомная гравитация из `GameConfig`.
-- Dash (Shift) с кулдауном; один воздушный dash до приземления.
-- После dash при удержании Shift — post-dash sprint multiplier.
-- Мультиплеер локально: MainMenu → Host + второй процесс Client (`127.0.0.1` или LAN IP).
-- Спавн со смещением по stride для нескольких игроков; ввод только у `IsOwner`.
-
-## Камера
-
-- `PlayerCameraController` + Cinemachine 3, орбита через Look.
-- Зона полировки: коллизии камеры, damping, Script Execution Order.
-
-## Конфигурация
-
-- **`Assets/Configs/GameConfig.asset`** — движение, физика.
-- **`Configs/Trials/`**, **`Configs/AllBaffs/`**, **`Configs/WorldHints/`** — контент испытаний и подсказок.
-
----
-
-## Этап 3 — испытания (кратко)
-
-Подробно: **`Stage 3.md`**.
-
-**Цикл:** E у пилона → заряд инициатору → финиш → перманент **всем** → пилон depleted.  
-**Штраф:** выход из `TrialBoundsZone` или таймер заряда → сброс trial, телепорт **всех** на `PenaltyRespawnPoint`, повтор без кулдауна.
-
-| Область | Ключевые типы |
-|--------|----------------|
-| Данные | `TrialDefinition`, `ChargeTypeDefinition`, `PermanentModifierDefinition`, каталоги |
-| Игрок | `PlayerChargeController`, `PlayerPermanentModifiers`, `PlayerInteractionController`, `PlayerTrialInteractor`, `NetworkPlayerController.TeleportTo` |
-| Мир | `TrialPylonStart`, `TrialFinishZone`, `TrialBoundsZone`, `TrialSessionRegistry`, `TrialPenaltyReason` |
-| UX | `InteractableOutlineRendererFeature`, `WorldTextHintPresenter`, `InteractionPromptView` |
-
-**Stage 3 закрыт для альфы** (gameplay loop).
-
-## Этап 4 — бросок заряда (кратко)
-
-Подробно: **`Stage 4.md`**.
-
-**Цикл:** ПКМ Aim → луч прицела → ЛКМ бросок → `ChargeProjectile` (server homing) → catch / miss / лимит попыток.  
-**Не сделано / отложено:** отдельная Aim-камера (4.6), пульсирующий telegraph-VFX, `ChargeSource`, антимаг.
-
-| Область | Ключевые типы |
-|--------|----------------|
-| Aim | `PlayerAimController`, `PlayerThrowDirectionResolver`, `PlayerAimVisualsPresenter` |
-| Снаряд | `ChargeProjectile`, `ProjectileTrajectorySimulator` |
-| Сеть / UX | `PlayerIncomingChargeIndicator`, `ProjectileThrowSignals` |
-| Данные | `GameConfig.Projectile`, `ChargeTypeDefinition` (attempts, cooldown) |
-
-**Stage 4 MVP закрыт.** **Не сделано (другие этапы):** `ChargedState` в FSM, UI таймера, полноценный VFX/AUDIO telegraph, антимаг (Stage 5).
-
----
-
-## Сцены и префабы
-
-| Ассет | Назначение |
-|-------|------------|
-| `Scenes/MainMenu.unity` | Точка входа билда, сеть UI |
-| `Scenes/Sandbox.unity` | Песочница: NGO, trials, hints |
-| `Prefabs/PlayerRoot.prefab` | Сетевой игрок + hints presenter |
-| `Prefabs/PylonStartRoot.prefab` | Старт испытания |
-| `Prefabs/PylonEndRoot.prefab` | Финиш испытания |
-| `Prefabs/WorldTextHintTriggerRoot.prefab` | Триггер world hint |
-
----
-
-## Технический долг и риски
-
-| Тема | Комментарий |
-|------|-------------|
-| Relay / UGS | Не интегрирован; расхождение с текстом `Stage 2.1` — осознанное |
-| Визуал игрока | `NetworkPlayerEventsRelay` — RPC-скелет без Animator |
-| Event Bus в меню | Пока прямые вызовы; каналы на успешный connect — опционально |
-| Порт | Держать одинаковым: MainMenu host port = `ConnectionManager.port` на Sandbox |
-| `NetworkRigidbody` | Учитывать при будущих физических добавках |
-| Локализация | После добавления ключей — прогон editor setup (см. гайд) |
-
----
-
-## Карта документации `_Docs/`
-
-| Файл | Назначение |
-|------|------------|
-| `Onboarding.md` | Вход в проект, 6 столпов |
-| `Architecture-Snapshot.md` | Структура кода и договоры |
-| `Development-Status.md` | **Этот файл** — текущий статус |
-| `DevLog.md` | Хронология недавних изменений |
-| `MainMenu-And-Networking.md` | Меню, NGO, guest validation |
-| `Localization-And-WorldHints.md` | RU/EN, подсказки в мире |
-| `Stage 1.md` … `Stage 7.md` | Задачи по этапам |
-| `GDD.md`, `ConceptDocument.md` | Дизайн и концепт |
-
----
-
-*Следующий логический шаг: **Stage 5** (`Stage 5.md`). Опционально: UI таймера заряда, polish VFX telegraph.*
+# Catsss — текущее состояние разработки
+
+**Живой документ** для отслеживания того, что уже в репозитории, что воспроизводимо в редакторе, и что из официальных этапов (`Stage 1–7`) ещё не закрыто.
+
+| Поле | Значение |
+|------|----------|
+| **Текущий этап** | **Stage 5** ✅ MVP закрыт → следующий: **Stage 6 / Stage 7** |
+| **Закрыто недавно** | **Stage 5** ✅ — level kit (печати, платформы, антимаг, ветер) |
+| **Цель альфы** | Vertical slice одного уровня, 2 игрока по сети |
+| **Точка входа** | Сцена `MainMenu` → `Sandbox` |
+| **Последнее обновление** | Май 2026 — Stage 5 MVP |
+
+**Ветки Git (рекомендация):** **`Stage-5`** — level kit; после merge в `main` — ветка для Stage 6/7.
+
+---
+
+## Сводка: что работает сейчас
+
+| Область | Статус | Документ |
+|---------|--------|----------|
+| Архитектурное ядро (FSM, Events, ServiceLocator, Timing) | ✅ Stage 1 | `Architecture-Snapshot.md`, `Stage 1.md` |
+| NGO + UTP (IP/порт, без Relay) | ✅ | `MainMenu-And-Networking.md`, `Stage 2.md` |
+| Движение игрока (ходьба, прыжок, dash, камера) | ✅ MVP | ниже |
+| Испытания: пилон → заряд → финиш → перманент | ✅ Stage 3 | `Stage 3.md` |
+| Штрафы испытания (bounds, таймер, командный телепорт) | ✅ | `Stage 3.md` |
+| Взаимодействие E + URP-контур | ✅ MVP | `Stage 3.md` |
+| Локализация RU/EN | ✅ | `Localization-And-WorldHints.md` |
+| World-space подсказки | ✅ MVP | `Localization-And-WorldHints.md` |
+| Guest connect с валидацией | ✅ | `MainMenu-And-Networking.md` |
+| **Бросок заряда, Aim, homing, попытки** | ✅ Stage 4 | `Stage 4.md` |
+| **Level kit: MagicSeal** | ✅ Stage 5 | `Stage 5.md` |
+| **Level kit: KinematicPlatform + rider** | ✅ Stage 5 | `Stage 5.md` |
+| **Level kit: AntiMagicZone** | ✅ Stage 5 | `Stage 5.md` |
+| **Level kit: AeroZone (ветер)** | ✅ Stage 5 | `Stage 5.md` |
+| Сюжетные пилоны-ловушки (мышь) | ❌ Stage 7 | `Stage 7.md` |
+
+---
+
+## Этап 4 — бросок заряда (кратко, закрыт)
+
+Подробно: **`Stage 4.md`**.
+
+**Цикл:** ПКМ Aim → луч прицела (`PlayerThrowDirectionResolver`) → ЛКМ → `ChargeProjectile` (server homing) → catch / miss / лимит попыток → telegraph на ловце.
+
+| Компонент | Назначение |
+|-----------|------------|
+| `PlayerAimController` | toggle Aim, throw RPC |
+| `ChargeProjectile` | server flight, catch/miss |
+| `TrialSessionRegistry` | попытки на trial |
+| `PlayerIncomingChargeIndicator` | сетевой флаг «летит в меня» |
+
+**Не сделано в Stage 4:** отдельная Aim-камера (4.6), полноценный VFX/AUDIO telegraph.
+
+---
+
+## Этап 5 — level kit (закрыт MVP)
+
+Подробно: **`Stage 5.md`**.
+
+**Цель:** универсальные префабы уровня — печати, кинематические платформы, антимаг-зоны, аэрозоны.
+
+| Подсистема | Ключевые скрипты |
+|------------|------------------|
+| 5.1 MagicSeal | `MagicSeal`, `MagicSealInteractable`, `MagicSealTriggerActivator` |
+| 5.2 KinematicPlatform | `KinematicPlatform`, `KinematicPlatformSignalDriver`, `MovingPlatformRider` |
+| 5.3 AntiMagicZone | `AntiMagicZone`, hook в `ChargeProjectile`, `TrialPenaltyReason.AntiMagicZone` |
+| 5.4 AeroZone | `AeroZone`, `AeroZoneReceiver`, `IsAir` в `ChargeTypeDefinition` |
+
+**Связка:** MagicSeal → `EmptyEventChannel` → signal drivers платформ / зон.
+
+**Опционально (5.5):** отдельная sandbox-комната level kit, polish префабов.
+
+---
+
+## Главное меню и сеть
+
+См. **`MainMenu-And-Networking.md`** — Host/Guest, UTP, валидация IP, `MenuConnectionFeedback`.
+
+---
+
+## Этап 3 — испытания (кратко)
+
+Подробно: **`Stage 3.md`**.
+
+**Цикл:** E у пилона → заряд инициатору → финиш → перманент **всем** → пилон depleted.  
+**Штраф:** выход из `TrialBoundsZone` или таймер заряда → сброс trial, телепорт **всех** на `PenaltyRespawnPoint`.
+
+---
+
+## Конфигурация
+
+| Ассет | Содержимое |
+|-------|------------|
+| `Configs/GameConfig.asset` | Движение, физика, **Projectile** (Aim/полёт) |
+| `Configs/Trials/`, `Configs/AllBaffs/` | Испытания, типы зарядов (`IsHeavy`, `IsAir`) |
+| `Configs/WorldHints/` | World hints |
+
+---
+
+## Сцены и префабы
+
+| Ассет | Назначение |
+|-------|------------|
+| `Scenes/MainMenu.unity` | Вход |
+| `Scenes/Sandbox.unity` | Песочница NGO + trials + throw + level kit |
+| `Prefabs/PlayerRoot.prefab` | Игрок (Aim, charge, telegraph, `AeroZoneReceiver`) |
+| `Prefabs/ChargeProjectileRoot.prefab` | Снаряд (Network Prefabs) |
+| `Prefabs/PylonStartRoot` / `PylonEndRoot` | Испытания |
+| `Prefabs/LevelKit/*` | MagicSeal, KinematicPlatform, AntiMagic, AeroZone — настраиваются в Unity |
+| `Prefabs/ButtonInteractibleRoot` / `ButtonTriggerRoot` | Печати (примеры) |
+
+---
+
+## Технический долг
+
+| Тема | Комментарий |
+|------|-------------|
+| Relay / UGS | Не интегрирован |
+| Визуал игрока | `NetworkPlayerEventsRelay` — скелет без Animator |
+| UI таймера заряда | Не сделан |
+| Level kit VFX | Stub-материалы; particles/mesh — позже |
+
+---
+
+## Карта документации `_Docs/`
+
+| Файл | Назначение |
+|------|------------|
+| `Development-Status.md` | **Этот файл** |
+| `Stage 4.md` / `Stage 5.md` | Закрытые этапы (MVP) |
+| `Stage 6.md` / `Stage 7.md` | Следующие этапы |
+| `Onboarding.md` | Вход для нового участника |
+| `Architecture-Snapshot.md` | Код и договоры |
+| `DevLog.md` | Хронология |
+| `Stage 1.md` … `Stage 7.md` | Задачи по этапам |
+
+---
+
+*Stage 5 MVP закрыт. Следующий фокус — **Stage 6** или **Stage 7** по roadmap.*
+

@@ -4,7 +4,86 @@
 
 ---
 
-## Май 2026 — Stage 4: бросок заряда и передача (MVP)
+## Май 2026 — Stage 5: закрыт MVP (Level Kit 5.1–5.4) ✅
+
+**Цель:** универсальный конструктор уровня — печати, платформы, антимаг, ветер; связка через `EmptyEventChannel`.
+
+**Реализовано по шагам:**
+
+| Шаг | Система | Ключевое |
+|-----|---------|----------|
+| 5.1 | MagicSeal | E/trigger, Momentary/Toggle/OneShot, heavy/co-op requirements |
+| 5.2 | KinematicPlatform | Waypoints snapshot, Cycle/Signal/Resonance, `MovingPlatformRider` |
+| 5.3 | AntiMagicZone | Trigger/solid, штраф заряженного, `BlocksProjectiles`, signal driver |
+| 5.4 | AeroZone | Target velocity, VerticalEquilibrium updraft, `IsAir`, signal driver |
+
+**Архитектурные решения:**
+- Server: печати, платформы, антимаг; Client (owner): ветер через `AeroZoneReceiver`.
+- Визуал — stub-компоненты (MaterialPropertyBlock), логика без ссылок на particles/mesh.
+- Выключенные зоны: коллайдер остаётся, alpha ~0.02.
+- Исправление: один `EmptyEventChannel` на несколько слотов SignalDriver → triple-fire (раздельные channel asset'ы).
+
+**Документы:** `Stage 5.md`, `Development-Status.md`, `Architecture-Snapshot.md`, `Onboarding.md`.
+
+---
+
+## Май 2026 — Stage 5.4: AeroZone (ветер)
+
+**Реализовано:**
+
+- `AeroZone` — trigger-box, target velocity, режим VerticalEquilibrium для updraft-колонн.
+- `AeroZoneReceiver` на PlayerRoot — суммирование зон (owner-only).
+- `NetworkPlayerController.ApplyWindInfluence()` — после FSM, включая Dash.
+- `ChargeTypeDefinition`: `IsAir`, `AirWindSpeedMultiplier`; `IsHeavy` → ветер игнорируется.
+- `AeroZoneSignalDriver`, `AeroZoneVisualStub`.
+
+---
+
+## Май 2026 — Stage 5.3: AntiMagicZone
+
+**Реализовано:**
+
+- `AntiMagicZone` — trigger (завеса) или solid BoxCollider; штраф только заряженного в активном trial.
+- Телепорт на `RespawnPoint`, −1 попытка броска, **заряд остаётся**; 0 попыток → `TrialPenaltyReason.AntiMagicZone`.
+- `BlocksProjectiles` + hook в `ChargeProjectile.TryHandleBarrierMissServer`.
+- `AntiMagicZoneSignalDriver` — Enable/Disable/Toggle зоны и блока снарядов отдельно.
+- `AntiMagicZoneVisualStub`.
+
+---
+
+## Май 2026 — Stage 5: KinematicPlatform (LevelKit 5.2)
+
+**Цель:** универсальные движущиеся платформы для препятствий, дверей, гримуаров; связка с MagicSeal через EmptyEventChannel.
+
+**Реализовано:**
+
+- `KinematicPlatform` — snapshot waypoints из `Path/Point_*`, server FixedUpdate, Cycle Yoyo/Loop, Signal/Resonance.
+- `KinematicPlatformSignalDriver` — Pressed/Released/OneShot → PlayForward/Reverse/Toggle/Stop + `EndPolicy`.
+- `KinematicPlatformResonanceZone` — AnyPlayer / AnyActiveCharge / HeavyCharge.
+- `ServerNetworkTransform`, `MovingPlatformRider` на игроке (owner-only delta).
+- Editor gizmo для path.
+
+**Документы:** `Stage 5.md`, `Development-Status.md`, `Architecture-Snapshot.md`.
+
+---
+
+## Май 2026 — Stage 5: MagicSeal (LevelKit 5.1)
+
+**Цель:** первый универсальный lego-блок уровня — E/trigger-кнопки для будущих платформ, дверей, ветра и других пазлов.
+
+**Реализовано:**
+
+- `MagicSeal` — server-authoritative состояние `Idle/Pressed/Locked/Disabled`, политики `Momentary/Toggle/OneShot`.
+- `MagicSealInteractable` — активация по E через существующие `IInteractable`, world prompt и URP outline.
+- `MagicSealTriggerActivator` — trigger-плиты с требованиями `AnyPlayer` / `HeavyCharge`, минимумом игроков или `AllConnectedPlayers`.
+- `MagicSealVisualStub` — клиентская заглушка цвета по реплицированному состоянию.
+- SO-сигналы `EmptyEventChannel` для pressed/released/one-shot; локальные server `UnityEvent` оставлены для быстрых сценовых связок.
+
+**Документы:** `Stage 5.md`, `Development-Status.md`, `Architecture-Snapshot.md`.
+
+---
+
+## Май 2026 — Stage 4: бросок заряда и передача (MVP) ✅
 
 **Цель:** метание заряда между котами в co-op trial — Aim, homing-снаряд, catch/miss, лимит попыток.
 
@@ -13,13 +92,15 @@
 - `PlayerAimController` — ПКМ toggle Aim, ЛКМ throw (owner-only), `ThrowChargeServerRpc`.
 - `PlayerThrowDirectionResolver` — луч из viewport (настройка `aimViewportY`), бросок в небо, синхрон с Cinemachine.
 - `ChargeProjectile` — server kinematic homing, catch/miss, `TrialSessionRegistry` attempts.
-- `PlayerAimVisualsPresenter` + `LineRendererAimTrajectory` — дуга предпросмотра.
+- `PlayerAimVisualsPresenter` + `LineRendererAimTrajectory` — дуга предпросмотра от `ThrowOrigin`.
 - `PlayerIncomingChargeIndicator` + visual stub — telegraph без пульсации; `ProjectileThrowSignals`.
 - Edge cases 4.7: disconnect → restore snapshot кидавшему без декремента попыток; штраф bounds → `AbortAllForTrialServer`; auto-exit Aim; cooldown после catch.
 
 **Решения:** без soft-lock; попытки и бонус таймера в `ChargeTypeDefinition`; **4.6 Aim-камера отложена** — текущая orbital.
 
-**Документы:** `Stage 4.md`, `Development-Status.md`, `Architecture-Snapshot.md`.
+**Документы:** `Stage 4.md`, `Development-Status.md`, `Architecture-Snapshot.md`, `Onboarding.md`.
+
+**Git:** смержено в ветку **`Stage-5`** из `stage4/logic` (коммит «Этап 4 завершённый»).
 
 ---
 
