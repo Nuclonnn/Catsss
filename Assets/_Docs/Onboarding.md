@@ -64,8 +64,9 @@
 | 2 | `Architecture-Snapshot.md` — структура папок и namespaces |
 | 3 | `Stage 4.md` — бросок заряда (закрыт MVP) |
 | 4 | `Stage 5.md` — level kit (закрыт MVP) |
-| 5 | `Stage 6.md` / `Stage 7.md` — **следующие этапы** |
-| 6 | `DevLog.md` — что менялось недавно |
+| 5 | `Stage 6.md` — мышь-саботажник (закрыт MVP) |
+| 6 | `Stage 7.md` — **следующий этап** |
+| 7 | `DevLog.md` — что менялось недавно |
 
 ### 2. Запустить проект
 
@@ -81,9 +82,11 @@
 
 **Stage 4 ✅ (MVP):** ПКМ Aim, ЛКМ throw, `ChargeProjectile`, homing, попытки, telegraph.
 
-**Stage 5 ✅ (MVP):** level kit — MagicSeal, KinematicPlatform, AntiMagicZone, AeroZone. Ветка **`Stage-5`**.
+**Stage 5 ✅ (MVP):** level kit — MagicSeal, KinematicPlatform, AntiMagicZone, AeroZone.
 
-**Не начато:** Stage 6–7 (сюжетные пилоны, мышь).
+**Stage 6 ✅ (MVP):** мышь-актёр — `MouseRoute`, `MouseCueTrigger`, `MouseTrialReaction`, купол, поимка. Prefabs в `Prefabs/Mouse/`.
+
+**Следующий:** Stage 7 — `GameFlowManager`, финальная погоня, победа.
 
 ### 4. Специализированные гайды
 

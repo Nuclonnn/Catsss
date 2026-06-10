@@ -4,6 +4,37 @@
 
 ---
 
+## Июнь 2026 — Stage 6: закрыт MVP (мышь-саботажник) ✅
+
+**Цель:** сценическая мышь вместо свободного NavMesh-AI — маршруты, триггеры, связка с Trials и Level Kit.
+
+**Реализовано по шагам:**
+
+| Шаг | Система | Ключевое |
+|-----|---------|----------|
+| 6.1 | Сетевой prefab | `MouseBrain`, `ServerNetworkTransform`, layers Spectral/Physical, `MouseConfig` |
+| 6.2 | MouseRoute | `Path/Point_*`, end modes, waypoint events, gizmos |
+| 6.3 | MouseCueTrigger | Co-op count, play once, route playback |
+| 6.4 | Саботаж | waypoint → `EmptyEventChannel` → Stage 5 drivers |
+| 6.5 | Trial reactions | `MouseTrialReaction` + `TrialProgressEventChannel` |
+| 6.7 | Купол | `MouseDomeZone`, NavMesh flee, catch, `MouseCaughtChannel` |
+
+**Polish:**
+- `ReturnHidden` — скрытие на последней точке (не burrow teleport).
+- Debug вынесен в `MouseDebugBootstrap`.
+- `MouseVisualStub` fade, плавный поворот на маршруте.
+- NavMesh manual sync для NGO + kinematic RB.
+- `MouseCaughtListener` stub; `MouseRouteEditor` validate + direction arrows.
+
+**Архитектурные решения:**
+- Namespace `Catsss.Gameplay.Mouse` (конфликт с Input System).
+- Shared path code: `WaypointPathFollower` / `WaypointPathSnapshot` в `Core/Path`.
+- **6.6** (chase + rubberbanding) → **Stage 7.2**; параметры rubberband уже в `MouseConfig`.
+
+**Документы:** `Stage 6.md`, `Development-Status.md`, `Architecture-Snapshot.md`, `Onboarding.md`.
+
+---
+
 ## Май 2026 — Stage 5: закрыт MVP (Level Kit 5.1–5.4) ✅
 
 **Цель:** универсальный конструктор уровня — печати, платформы, антимаг, ветер; связка через `EmptyEventChannel`.

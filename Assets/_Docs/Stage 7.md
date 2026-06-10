@@ -1,31 +1,118 @@
-**Статус:** ❌ Не начат. **Предусловие:** Stage 5 ✅ (level kit). Сюжетные пилоны ≠ trial-пилоны Stage 3.
+# ЭТАП 7: GameFlowManager и финальный act уровня
 
-Цель: Написать глобальный менеджер, который слушает события от объектов на сцене и переключает фазы игры. Провести полное сквозное тестирование Альфа-цикла.
-Задача 7.1: Пилоны (Сюжетные Ловушки)
+**Статус:** ❌ Не начат. **Предусловие:** Stage 6 ✅ (мышь-актёр: маршруты, cue, trial-реакции, купол, поимка, polish).
 
-> **Не путать с MVP этапа 3:** префабы `PylonStartRoot` / `TrialPylonStart` — **испытания** (заряд → финиш → перманент). Задачи ниже — **другая** механика (поглощение заряда мышью, `PylonActivatedChannel`, прогресс купола). См. `Stage 3.md`.
+**Цель:** Связать Trials, мышь и кульминацию уровня в один сценарий через `GameFlowManager`. Провести сквозной vertical slice альфа-уровня.
 
-•	Создай префаб Pylon.
-•	Логика: Пилон имеет триггер. Если игрок с любым зарядом касается Пилона -> Пилон "поглощает" заряд (шлет запрос на обнуление chargeID игроку).
-•	Пилон меняет свой материал на "Заряженный" и через Event Bus вызывает событие PylonActivatedChannel.Invoke(int pylonID).
-Задача 7.2: GameFlowManager (Управление Фазами)
-•	Создай скрипт GameFlowManager (зарегистрируй в ServiceLocator). Он должен работать только на Сервере (if (!IsServer) return;).
-•	Инициализация (Фаза Разведки):
-o	При старте сцены мышь находится в WanderState.
-o	Менеджер подписывается на PylonActivatedChannel.
-•	Счетчик Прогресса:
-o	Внутри менеджера есть int activatedPylons = 0 и настройка int pylonsRequiredToChase = 2.
-o	При получении ивента от Пилона, делаем activatedPylons++.
-•	Переход к Погоне (Фаза Охоты):
-o	Если activatedPylons == pylonsRequiredToChase, менеджер вызывает у мыши StartChase(chaseSpline).
-o	Менеджер шлет ClientRpc_StartChaseMusic(), чтобы у всех клиентов сменился саундтрек.
-Задача 7.3: Выдача Перманентных Навыков (Abilities)
-•	Связь Пилонов и Навыков: Когда GameFlowManager (Сервер) фиксирует активацию Пилона 1, он вызывает локальный Event Bus: AbilityUnlockedChannel.Invoke("Dash").
-•	Скрипт PlayerAbilityUnlocker (из Этапа 3.2), который висит на игроках, ловит этот ивент и навсегда открывает игрокам возможность использовать стейт DashState.
-•	Для Пилона 2: разблокируется "DoubleJump".
-Задача 7.4: Кульминация и Победа
-•	GameFlowManager подписывается на событие от мыши MouseCaughtChannel (см. Этап 6.5).
-•	Когда событие получено, менеджер:
-o	Останавливает таймеры.
-o	Шлет ClientRpc_ShowVictoryScreen().
-o	(Опционально): Включает замедление времени Time.timeScale = 0.2f на 2 секунды для красивого кинематографичного эффекта поимки.
+**Документы:** `Stage 3.md` (Trials), `Stage 6.md` (мышь), `GDD.md`.
+
+---
+
+## Связь со Stage 6
+
+| Было в Stage 6 | Куда переехало |
+|----------------|----------------|
+| **6.6** Финальная погоня + rubberbanding | **Stage 7.2** — запуск через `GameFlowManager` |
+| **6.7** Купол + поимка | **Stage 6** ✅ — механика мыши (`MouseDomeZone`, flee, `MouseCaughtChannel`) |
+| Победа / slow-mo / экран | **Stage 7.4** — реакция `GameFlowManager` на `MouseCaughtChannel` |
+
+Stage 6 закрывает **инструменты и финальную поимку мыши**. Stage 7 закрывает **режissуру уровня**: когда начинается погоня, музыка, победа.
+
+---
+
+## Фазы альфа-уровня (целевой flow)
+
+```text
+1. Exploration     — мышь Hidden / короткие сценки (MouseCueTrigger, MouseTrialReaction)
+2. Trial 1         — Started/Completed реакции мыши (6.5), саботаж (6.4)
+3. Trial 2         — то же
+4. Chase (6.6→7.2) — GameFlowManager запускает финальный MouseRoute + rubberbanding
+5. Dome (6.7)      — EnterDome → flee → catch → MouseCaughtChannel
+6. Victory (7.4)   — GameFlowManager → экран победы
+```
+
+---
+
+## Задача 7.1: Trials и прогресс (уточнение)
+
+**Не дублировать Stage 3.** Trial-пилоны, заряд, финиш и перманент уже работают.
+
+Для Stage 7 достаточно:
+- слушать **`TrialProgressEventChannel`** (Completed) или считать завершённые trials на сервере;
+- опционально: кооп-действие «сыр» (`MagicSeal` + E оба игрока) как триггер погони — настраивается в сцене.
+
+Старые «сюжетные пилоны-ловушки» из раннего ТЗ **не используются** в альфе — прогресс = **2 Trial Completed**.
+
+---
+
+## Задача 7.2: GameFlowManager + финальная погоня (бывшая 6.6)
+
+Создать **`GameFlowManager`** (`NetworkBehaviour`, server-only, `ServiceLocator`).
+
+### Фазы менеджера
+
+| Фаза | Условие входа |
+|------|----------------|
+| `Exploration` | старт сцены |
+| `Chase` | оба Trial Completed (+ опционально кооп-сыр) |
+| `Victory` | `MouseCaughtChannel` |
+
+### Обязанности
+
+- Подписка на **`TrialProgressEventChannel`** — считать `completedTrials`; при `>= trialsRequiredForChase` (2) → `StartChasePhaseServer()`.
+- **`StartChasePhaseServer()`:**
+  - `mouse.PlayRouteServer(finalChaseRoute, teleportToRouteStart: true)`;
+  - маршрут с **`End Mode = EnterDome`**;
+  - **rubberbanding** (перенос из отложенной 6.6): в `RouteFollowMouseState` или флаг `MouseRoute.enableRubberbanding` — замедление, если игрок далеко;
+  - `ClientRpc` / event для смены музыки (заглушка OK).
+- Не запускать погоню повторно (`playOnce`).
+
+### Rubberbanding (из 6.6)
+
+- параметры из `MouseConfig`: `rubberbandFarDistance`, `rubberbandSlowMultiplier`, `rubberbandNearDistance`;
+- применять только на финальном chase-маршруте (флаг на route или вызов из GameFlowManager).
+
+---
+
+## Задача 7.3: Перманентные навыки
+
+**Уже в Stage 3:** `TrialSessionRegistry` → `PlayerPermanentModifiers` при CompleteTrial.
+
+Stage 7 **не дублирует** `AbilityUnlockedChannel`, если Trials уже выдают Dash / DoubleJump.
+
+Опционально: world hint или сценка мыши после Completed — через `MouseTrialReaction` (6.5).
+
+---
+
+## Задача 7.4: Победа
+
+- `GameFlowManager` подписывается на **`MouseCaughtChannel`** (Stage 6.7).
+- Сервер:
+  - фаза → `Victory`;
+  - остановка chase-таймеров;
+  - `ClientRpc_ShowVictoryScreen()` (заглушка UI OK);
+  - опционально slow-mo на клиентах (не `timeScale` на server).
+
+---
+
+## Задача 7.5: Сквозной тест альфы
+
+Чеклист:
+- [ ] Host + Guest: Trial 1 → Trial 2 → погоня → купол → поимка → победа
+- [ ] Мышь не ловится до купola (Spectral на chase)
+- [ ] Rubberbanding не теряет мышь из гонки
+- [ ] `MouseCaughtChannel` → GameFlowManager
+
+---
+
+## Настройка в Unity (после реализации 7.2–7.4)
+
+1. Объект **`GameFlowManager`** в Sandbox, `NetworkObject`, ServiceLocator.
+2. Ссылки: `MouseBrain`, `MouseRoute_FinalChase`, `TrialProgressEventChannel`, `MouseCaughtChannel`.
+3. **`trialsRequiredForChase`** = 2.
+4. Финальный маршрут: верхний ярус, **End Mode = EnterDome**, rubberbanding включён.
+5. **MouseDomeZone** + NavMesh bake в куполе (см. Stage 6.7).
+
+---
+
+*Stage 7 стартует после закрытия Stage 6.7.*

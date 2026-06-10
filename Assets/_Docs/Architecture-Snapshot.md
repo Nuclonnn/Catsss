@@ -2,9 +2,9 @@
 
 **Живой документ:** структура кода и архитектурные договоры. Дополняет `GDD.md` и этапы `Stage 1–7`.
 
-| Последнее обновление | Май 2026 |
+| Последнее обновление | Июнь 2026 |
 |---------------------|----------|
-| Текущий фокус | **Stage 5** ✅ MVP; следующий — **Stage 6 / Stage 7** |
+| Текущий фокус | **Stage 6** ✅ MVP; следующий — **Stage 7** |
 
 ---
 
@@ -20,13 +20,15 @@
 | `Scripts/Charges/` | Заряды, **`Charges/Projectile/`**, перманентные модификаторы |
 | `Scripts/Trials/` | Пилоны, зона bounds, реестр, штрафы |
 | `Scripts/LevelKit/` | **Stage 5 ✅:** MagicSeal, KinematicPlatform, AntiMagicZone, AeroZone |
+| `Scripts/Mouse/` | **Stage 6 ✅:** MouseBrain FSM, routes, cue, trial reactions, dome |
+| `Scripts/Core/Path/` | `WaypointPathSnapshot`, `WaypointPathFollower` (platforms + mouse) |
 | `Scripts/Interaction/` | `IInteractable`, промпт (через world hints) |
 | `Scripts/Rendering/` | URP outline для фокуса взаимодействия |
 | `Scripts/Configs/` | `GameConfig`, каталоги зарядов/перманентов |
-| `Scripts/Editor/` | Bootstrap локализации, world hints, KinematicPlatform gizmo |
+| `Scripts/Editor/` | Bootstrap локализации, world hints, KinematicPlatform gizmo, **MouseRouteEditor** |
 | `Localization/` | Unity Localization: locales, `UI_Strings` |
 | `Configs/` | SO: GameConfig, Trials, AllBaffs, **WorldHints** |
-| `Prefabs/` | PlayerRoot, PylonStart/End, **LevelKit/**, **WorldTextHintTriggerRoot** |
+| `Prefabs/` | PlayerRoot, PylonStart/End, **LevelKit/**, **Mouse/**, **WorldTextHintTriggerRoot** |
 | `Scenes/` | **MainMenu** (вход), **Sandbox** (геймплей) |
 | `_Docs/` | Документация проекта |
 
@@ -187,6 +189,39 @@ AeroZone (trigger) → AeroZoneReceiver (PlayerRoot) → NetworkPlayerController
 
 ---
 
+## Мышь-саботажник (Stage 6) ✅
+
+### MouseBrain FSM (server)
+
+```
+Hidden          — spawn в home burrow, presence Hidden
+RouteFollow     — WaypointPathFollower, Spectral, waypoint events
+DomeFlee        — Physical, NavMeshAgent flee, manual RB sync
+Caught          — MouseCaughtChannel + ClientRpc
+```
+
+```
+MouseCueTrigger / MouseTrialReaction
+    → MouseBrain.PlayRouteServer(MouseRoute)
+        → WaypointPathFollower (Core/Path)
+            → MouseRouteWaypointEvent → EmptyEventChannel
+                → LevelKit signal drivers
+
+MouseRoute EndMode EnterDome / MouseDomeZone
+    → DomeFlee → catch trigger + player → Caught
+```
+
+- **Transform sync:** `ServerNetworkTransform` на MouseRoot.
+- **ReturnHidden:** скрытие на последней точке (без burrow teleport).
+- **Rubberbanding:** параметры в `MouseConfig`; применение — **Stage 7.2**.
+- **Визуал:** `MouseVisualStub` (client) — fade + MaterialPropertyBlock; не в FSM.
+- **Dev:** `MouseDebugBootstrap`, `MouseCaughtListener` (stub до GameFlowManager).
+- **Namespace:** `Catsss.Gameplay.Mouse` (избегает конфликта с Input System `Mouse`).
+
+Подробнее: **`Stage 6.md`**.
+
+---
+
 ## Локализация (`Scripts/Core/Localization/`)
 
 | Тип | Роль |
@@ -238,6 +273,8 @@ Interaction reuse: `InteractionPromptView` : `WorldTextHintView`.
 | `Catsss.Player.Aim` | Aim controller, trajectory, throw direction |
 | `Catsss.Trials` | Trial pylons, bounds, registry, penalty reasons |
 | `Catsss.LevelKit` | Stage 5 puzzle blocks: MagicSeal, KinematicPlatform, AntiMagicZone, AeroZone |
+| `Catsss.Gameplay.Mouse` | Stage 6: MouseBrain, routes, cue, dome |
+| `Catsss.Core.Path` | Waypoint path snapshot + follower |
 | `Catsss.Interaction` | Interactable contract, prompt settings |
 | `Catsss.Rendering` | URP features |
 | `Catsss.Configs` | GameConfig, charge/trial data |
@@ -255,5 +292,6 @@ Interaction reuse: `InteractionPromptView` : `WorldTextHintView`.
 | `Stage 3.md` | Trials MVP + настройка Unity |
 | `Stage 4.md` | Aim + бросок (закрыт MVP) |
 | `Stage 5.md` | Level kit (закрыт MVP) |
-| `Stage 6.md` / `Stage 7.md` | Следующие этапы |
+| `Stage 6.md` | Мышь-саботажник (закрыт MVP) |
+| `Stage 7.md` | Следующий этап |
 | `Onboarding.md` | Первый день в проекте |
