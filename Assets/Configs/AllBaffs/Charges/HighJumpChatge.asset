@@ -25,5 +25,5 @@ MonoBehaviour:
   heavyGravityMultiplier: 2.5
   isAir: 0
   airWindSpeedMultiplier: 2.5
-  auraColor: {r: 0, g: 1, b: 1, a: 1}
-  vfxPrefab: {fileID: 0}
+  auraColor: {r: 0.7686275, g: 0.7686275, b: 0.7686275, a: 0.8862745}
+  vfxPrefab: {fileID: 5824670795371433373, guid: f6fd568b816c64943a44efc3add3a881, type: 3}

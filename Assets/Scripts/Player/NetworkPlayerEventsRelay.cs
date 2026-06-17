@@ -1,3 +1,4 @@
+using System;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -7,6 +8,12 @@ namespace Catsss.Player
     public sealed class NetworkPlayerEventsRelay : NetworkBehaviour
     {
         [SerializeField] private NetworkPlayerController controller;
+
+        /// <summary>Срабатывает на удалённых клиентах после RPC прыжка владельца.</summary>
+        public event Action RemoteJumped;
+
+        /// <summary>Срабатывает на удалённых клиентах после RPC рывка владельца.</summary>
+        public event Action RemoteDashed;
 
         private void Reset()
         {
@@ -74,13 +81,13 @@ namespace Catsss.Player
         [Rpc(SendTo.NotOwner)]
         private void JumpClientRpc()
         {
-            // Stage 2 only confirms the network event path. Visual subscribers come later.
+            RemoteJumped?.Invoke();
         }
 
         [Rpc(SendTo.NotOwner)]
         private void DashClientRpc()
         {
-            // Stage 2 only confirms the network event path. Visual subscribers come later.
+            RemoteDashed?.Invoke();
         }
     }
 }

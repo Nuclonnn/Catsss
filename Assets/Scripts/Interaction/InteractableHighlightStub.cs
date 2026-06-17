@@ -27,17 +27,49 @@ namespace Catsss.Interaction
             }
         }
 
+        private void Awake()
+        {
+            ResolveSourceRenderers();
+        }
+
         private void Reset()
+        {
+            ResolveSourceRenderers();
+        }
+
+        /// <summary>
+        /// Ищем SkinnedMeshRenderer на дочерней модели (nested prefab нельзя перетащить в инспектор).
+        /// </summary>
+        private void ResolveSourceRenderers()
+        {
+            if (HasValidRenderers())
+            {
+                return;
+            }
+
+            Renderer[] found = GetComponentsInChildren<Renderer>(true);
+            if (found.Length > 0)
+            {
+                sourceRenderers = found;
+            }
+        }
+
+        private bool HasValidRenderers()
         {
             if (sourceRenderers == null || sourceRenderers.Length == 0)
             {
-                MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
+                return false;
+            }
 
-                if (meshRenderer != null)
+            foreach (Renderer renderer in sourceRenderers)
+            {
+                if (renderer != null)
                 {
-                    sourceRenderers = new[] { meshRenderer };
+                    return true;
                 }
             }
+
+            return false;
         }
 
         public void SetHighlighted(bool highlighted)
@@ -49,9 +81,11 @@ namespace Catsss.Interaction
 
             _isHighlighted = highlighted;
 
-            if (sourceRenderers == null || sourceRenderers.Length == 0)
+            ResolveSourceRenderers();
+
+            if (!HasValidRenderers())
             {
-                Debug.LogWarning("[InteractableHighlightStub] Укажи Source Renderers.", this);
+                Debug.LogWarning("[InteractableHighlightStub] Не найдены Renderer'ы на PlayerVisual.", this);
                 return;
             }
 

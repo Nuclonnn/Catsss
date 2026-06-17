@@ -31,6 +31,8 @@ namespace Catsss.Gameplay.Mouse
 
         private void OnEnable()
         {
+            ResolveReferences();
+
             if (mouseBrain == null)
             {
                 return;
@@ -95,10 +97,28 @@ namespace Catsss.Gameplay.Mouse
                 mouseBrain = GetComponentInParent<MouseBrain>();
             }
 
-            if (renderers == null || renderers.Length == 0)
+            if (!HasValidRenderers())
             {
                 renderers = GetComponentsInChildren<Renderer>(true);
             }
+        }
+
+        private bool HasValidRenderers()
+        {
+            if (renderers == null || renderers.Length == 0)
+            {
+                return false;
+            }
+
+            foreach (Renderer targetRenderer in renderers)
+            {
+                if (targetRenderer != null)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private float ResolveFadeDuration()
