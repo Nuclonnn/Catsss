@@ -5,7 +5,6 @@ using Catsss.Core.Events;
 using Catsss.Player;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Events;
 
 namespace Catsss.LevelKit
 {
@@ -23,15 +22,10 @@ namespace Catsss.LevelKit
         [SerializeField] private bool startDisabled;
         [SerializeField] private bool enableDebugLogs;
 
-        [Header("SO Event Channels")]
+        [Header("SO Event Channels (server)")]
         [SerializeField] private EmptyEventChannel pressedChannel;
         [SerializeField] private EmptyEventChannel releasedChannel;
         [SerializeField] private EmptyEventChannel oneShotChannel;
-
-        [Header("Local Server Events")]
-        [SerializeField] private UnityEvent pressed;
-        [SerializeField] private UnityEvent released;
-        [SerializeField] private UnityEvent oneShotActivated;
 
         private readonly NetworkVariable<MagicSealState> _state = new();
         private readonly HashSet<int> _heldSourceIds = new();
@@ -210,17 +204,14 @@ namespace Catsss.LevelKit
             if (current == MagicSealState.Pressed)
             {
                 pressedChannel?.Invoke();
-                pressed?.Invoke();
             }
             else if (previous == MagicSealState.Pressed && current == MagicSealState.Idle)
             {
                 releasedChannel?.Invoke();
-                released?.Invoke();
             }
             else if (current == MagicSealState.Locked)
             {
                 oneShotChannel?.Invoke();
-                oneShotActivated?.Invoke();
             }
 
             if (enableDebugLogs)

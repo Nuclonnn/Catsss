@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.Localization;
+using UnityEngine.Localization.Settings;
 
 namespace Catsss.Core.Localization
 {
@@ -15,6 +16,7 @@ namespace Catsss.Core.Localization
         [SerializeField] private string editorFallback = string.Empty;
 
         private Action<string> _changeHandler;
+        private bool _waitingForLocalizationInit;
 
         public LocalizedString LocalizedText => localizedText;
         public string EditorFallback => editorFallback;
@@ -23,10 +25,8 @@ namespace Catsss.Core.Localization
 
         public string ResolveDisplayText()
         {
-            if (HasLocalization)
+            if (HasLocalization && TryGetLocalizedString(out string localized))
             {
-                string localized = localizedText.GetLocalizedString();
-
                 if (!string.IsNullOrWhiteSpace(localized))
                 {
                     return localized;
@@ -47,22 +47,124 @@ namespace Catsss.Core.Localization
             }
 
             _changeHandler = onTextChanged;
-            onTextChanged.Invoke(ResolveDisplayText());
 
-            if (HasLocalization)
+            if (!HasLocalization)
             {
-                localizedText.StringChanged += OnLocalizedStringChanged;
+                onTextChanged.Invoke(editorFallback ?? string.Empty);
+                return;
             }
+
+            if (IsLocalizationReady())
+            {
+                ApplyBinding(onTextChanged);
+                return;
+            }
+
+            // Localization ещё инициализируется (часто при первом Play / reload сцены).
+            onTextChanged.Invoke(editorFallback ?? string.Empty);
+            WaitForLocalizationInit();
         }
 
         public void Unbind()
         {
+            StopWaitingForLocalizationInit();
+
             if (HasLocalization)
             {
                 localizedText.StringChanged -= OnLocalizedStringChanged;
             }
 
             _changeHandler = null;
+        }
+
+        private void ApplyBinding(Action<string> onTextChanged)
+        {
+            onTextChanged.Invoke(ResolveDisplayText());
+            localizedText.StringChanged += OnLocalizedStringChanged;
+        }
+
+        private void WaitForLocalizationInit()
+        {
+            if (_waitingForLocalizationInit || LocalizationSettings.Instance == null)
+            {
+                return;
+            }
+
+            var initOperation = LocalizationSettings.InitializationOperation;
+            if (!initOperation.IsValid() || initOperation.IsDone)
+            {
+                if (_changeHandler != null && HasLocalization)
+                {
+                    ApplyBinding(_changeHandler);
+                }
+
+                return;
+            }
+
+            _waitingForLocalizationInit = true;
+            initOperation.Completed += OnLocalizationInitCompleted;
+        }
+
+        private void StopWaitingForLocalizationInit()
+        {
+            if (!_waitingForLocalizationInit || LocalizationSettings.Instance == null)
+            {
+                _waitingForLocalizationInit = false;
+                return;
+            }
+
+            var initOperation = LocalizationSettings.InitializationOperation;
+            if (initOperation.IsValid())
+            {
+                initOperation.Completed -= OnLocalizationInitCompleted;
+            }
+
+            _waitingForLocalizationInit = false;
+        }
+
+        private void OnLocalizationInitCompleted(UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle<LocalizationSettings> _)
+        {
+            StopWaitingForLocalizationInit();
+
+            if (_changeHandler == null || !HasLocalization)
+            {
+                return;
+            }
+
+            ApplyBinding(_changeHandler);
+        }
+
+        private bool TryGetLocalizedString(out string localized)
+        {
+            localized = null;
+
+            if (!IsLocalizationReady())
+            {
+                return false;
+            }
+
+            try
+            {
+                localized = localizedText.GetLocalizedString();
+                return true;
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning(
+                    $"[LocalizedTextReference] GetLocalizedString failed, using fallback. {exception.Message}");
+                return false;
+            }
+        }
+
+        private static bool IsLocalizationReady()
+        {
+            if (LocalizationSettings.Instance == null)
+            {
+                return false;
+            }
+
+            var initOperation = LocalizationSettings.InitializationOperation;
+            return initOperation.IsValid() && initOperation.IsDone;
         }
 
         private void OnLocalizedStringChanged(string value)

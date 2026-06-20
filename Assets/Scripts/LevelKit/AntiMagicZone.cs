@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
-using Catsss.Charges.Projectile;
+using Catsss.Gameplay.Charges.Projectile;
+using Catsss.Core.Events;
 using Catsss.Core.Services;
 using Catsss.Player;
 using Catsss.Trials;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Events;
 
 namespace Catsss.LevelKit
 {
@@ -26,9 +26,9 @@ namespace Catsss.LevelKit
         [Tooltip("Куда телепортировать заряженного игрока после штрафа (рядом с зоной).")]
         [SerializeField] private Transform respawnPoint;
 
-        [Header("Events (server)")]
-        [SerializeField] private UnityEvent chargedPlayerPenalized;
-        [SerializeField] private UnityEvent projectileBlocked;
+        [Header("SO Event Channels (server)")]
+        [SerializeField] private EmptyEventChannel chargedPlayerPenalizedChannel;
+        [SerializeField] private EmptyEventChannel projectileBlockedChannel;
 
         [Header("Debug")]
         [SerializeField] private bool drawZoneGizmo = true;
@@ -199,7 +199,7 @@ namespace Catsss.LevelKit
             }
 
             projectile.TryHandleBarrierMissServer("antiMagic");
-            projectileBlocked?.Invoke();
+            projectileBlockedChannel?.Invoke();
             ProjectileBlocked?.Invoke(projectile);
 
             if (enableDebugLogs)
@@ -230,7 +230,7 @@ namespace Catsss.LevelKit
             }
 
             TeleportPlayerNearZone(player);
-            chargedPlayerPenalized?.Invoke();
+            chargedPlayerPenalizedChannel?.Invoke();
             ChargedPlayerPenalized?.Invoke(player);
 
             if (enableDebugLogs)

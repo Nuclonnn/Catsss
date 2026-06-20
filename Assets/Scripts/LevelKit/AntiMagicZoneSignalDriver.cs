@@ -1,4 +1,3 @@
-using Catsss.Core.Events;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -8,15 +7,10 @@ namespace Catsss.LevelKit
     [DisallowMultipleComponent]
     [RequireComponent(typeof(AntiMagicZone))]
     [RequireComponent(typeof(NetworkObject))]
-    public sealed class AntiMagicZoneSignalDriver : NetworkBehaviour
+    public sealed class AntiMagicZoneSignalDriver : NetworkEmptyEventChannelSignalDriverBase
     {
         [Header("Target")]
         [SerializeField] private AntiMagicZone zone;
-
-        [Header("Channels")]
-        [SerializeField] private EmptyEventChannel pressedChannel;
-        [SerializeField] private EmptyEventChannel releasedChannel;
-        [SerializeField] private EmptyEventChannel oneShotChannel;
 
         [Header("Actions")]
         [SerializeField] private AntiMagicZoneSignalBinding onPressed;
@@ -25,94 +19,41 @@ namespace Catsss.LevelKit
 
         private void Reset()
         {
-            if (zone == null)
-            {
-                zone = GetComponent<AntiMagicZone>();
-            }
+            ResolveZoneReference();
         }
 
         private void Awake()
         {
-            if (zone == null)
-            {
-                zone = GetComponent<AntiMagicZone>();
-            }
+            ResolveZoneReference();
         }
 
-        private void OnEnable()
-        {
-            if (pressedChannel != null)
-            {
-                pressedChannel.Raised += OnPressed;
-            }
-
-            if (releasedChannel != null)
-            {
-                releasedChannel.Raised += OnReleased;
-            }
-
-            if (oneShotChannel != null)
-            {
-                oneShotChannel.Raised += OnOneShot;
-            }
-        }
-
-        private void OnDisable()
-        {
-            if (pressedChannel != null)
-            {
-                pressedChannel.Raised -= OnPressed;
-            }
-
-            if (releasedChannel != null)
-            {
-                releasedChannel.Raised -= OnReleased;
-            }
-
-            if (oneShotChannel != null)
-            {
-                oneShotChannel.Raised -= OnOneShot;
-            }
-        }
-
-        private void OnPressed(EmptyEvent _)
+        protected override void HandlePressedServer()
         {
             ApplyBindingServer(onPressed);
         }
 
-        private void OnReleased(EmptyEvent _)
+        protected override void HandleReleasedServer()
         {
             ApplyBindingServer(onReleased);
         }
 
-        private void OnOneShot(EmptyEvent _)
+        protected override void HandleOneShotServer()
         {
             ApplyBindingServer(onOneShot);
         }
 
         private void ApplyBindingServer(AntiMagicZoneSignalBinding binding)
         {
-            if (!IsServerAuthority() || zone == null)
+            if (zone == null)
             {
                 return;
             }
 
-            bool zoneActive = ApplyAction(zone.IsZoneActive, binding.zoneAction);
-            bool blocksProjectiles = ApplyAction(zone.BlocksProjectiles, binding.projectileBlockAction);
+            bool zoneActive = ZoneSignalActionUtility.Apply(zone.IsZoneActive, binding.zoneAction);
+            bool blocksProjectiles = ZoneSignalActionUtility.Apply(zone.BlocksProjectiles, binding.projectileBlockAction);
 
             zone.SetRuntimeStateServer(zoneActive, blocksProjectiles);
             SyncVisualStateClientRpc(zoneActive, blocksProjectiles);
-        }
-
-        private static bool ApplyAction(bool current, AntiMagicZoneSignalAction action)
-        {
-            return action switch
-            {
-                AntiMagicZoneSignalAction.Enable => true,
-                AntiMagicZoneSignalAction.Disable => false,
-                AntiMagicZoneSignalAction.Toggle => !current,
-                _ => current,
-            };
         }
 
         [ClientRpc]
@@ -126,10 +67,12 @@ namespace Catsss.LevelKit
             zone.ApplyVisualStateClient(zoneActive, blocksProjectiles);
         }
 
-        private static bool IsServerAuthority()
+        private void ResolveZoneReference()
         {
-            NetworkManager networkManager = NetworkManager.Singleton;
-            return networkManager != null && networkManager.IsServer;
+            if (zone == null)
+            {
+                zone = GetComponent<AntiMagicZone>();
+            }
         }
     }
 }

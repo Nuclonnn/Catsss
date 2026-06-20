@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using Catsss.Core.Localization;
 using Catsss.Menu;
+using Catsss.Menu.Levels;
 using TMPro;
 using UnityEditor;
 using UnityEditor.Localization;
@@ -8,6 +9,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Localization.Tables;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace Catsss.EditorTools
 {
@@ -20,12 +22,22 @@ namespace Catsss.EditorTools
             ("Canvas/MainMenu/Title", "menu.title", "Catsss"),
             ("Canvas/MainMenu/HostButton/Text (TMP)", "menu.button.start", "Start game"),
             ("Canvas/MainMenu/GuestButton/Text (TMP)", "menu.button.connect", "Connect"),
+            ("Canvas/MainMenu/SettingsButton/Text (TMP)", "menu.button.settings", "Settings"),
             ("Canvas/MainMenu/QuitButton/Text (TMP)", "menu.button.quit", "Quit"),
             ("Canvas/GuestPanel/Title", "menu.title", "Catsss"),
             ("Canvas/GuestPanel/BackButton/Text (TMP)", "menu.button.back", "Back"),
             ("Canvas/GuestPanel/ConnectButton/Text (TMP)", "menu.button.connect", "Connect"),
             ("Canvas/GuestPanel/InputFieldIP/Placeholder", "menu.input.ip_placeholder", "Enter IP"),
             ("Canvas/GuestPanel/InputFieldPort/Placeholder", "menu.input.port_placeholder", "Enter Port"),
+            ("Canvas/SettingsPanel/Title", "settings.title", "Settings"),
+            ("Canvas/SettingsPanel/BackButton/Text (TMP)", "menu.button.back", "Back"),
+            ("Canvas/SettingsPanel/SensitivityLabel", "settings.sensitivity", "Mouse sensitivity"),
+            ("Canvas/SettingsPanel/LanguageLabel", "settings.language", "Language"),
+            ("Canvas/SettingsPanel/EnglishButton/Text (TMP)", "settings.language.english", "English"),
+            ("Canvas/SettingsPanel/RussianButton/Text (TMP)", "settings.language.russian", "Russian"),
+            ("Canvas/LevelSelectPanel/Title", "menu.level_select.title", "Levels"),
+            ("Canvas/LevelSelectPanel/BackButton/Text (TMP)", "menu.button.back", "Back"),
+            ("Canvas/LevelSelectPanel/PlayButton/Text (TMP)", "menu.level_select.play", "Play"),
         };
 
         [MenuItem(MenuPath)]
@@ -80,6 +92,29 @@ namespace Catsss.EditorTools
                 "Invalid IP or hostname. Example: 192.168.0.5 or localhost");
             AssignLocalizedReference(menuLocalizedText, "invalidPortText", collection, "menu.error.invalid_port",
                 "Invalid port. Enter a number from 1 to 65535.");
+            AssignLocalizedReference(menuLocalizedText, "hostDisconnectedText", collection, "menu.banner.host_disconnected",
+                "Host disconnected.");
+            AssignLocalizedReference(menuLocalizedText, "sessionEndedText", collection, "menu.banner.session_ended",
+                "Session ended.");
+            AssignLocalizedReference(menuLocalizedText, "sceneLoadFailedText", collection, "menu.error.scene_load_failed",
+                "Could not load level \"{0}\". Add it to Build Profiles and check the scene name in Level Catalog.");
+
+            LevelSelectController levelSelect = FindRelative(canvasRoot, "Canvas/LevelSelectPanel")?.GetComponent<LevelSelectController>();
+
+            if (levelSelect != null)
+            {
+                AssignLocalizedReference(levelSelect, "lockedHintText", collection, "menu.level_select.locked", "Locked");
+            }
+
+            Transform mainMenuPanel = FindRelative(canvasRoot, "Canvas/MainMenu");
+            if (mainMenuPanel != null)
+            {
+                TMP_Text sessionBannerTmp = EnsureSessionBannerText(mainMenuPanel);
+                SerializedObject menuTextSerialized = new SerializedObject(menuLocalizedText);
+                menuTextSerialized.FindProperty("sessionBannerTmp").objectReferenceValue = sessionBannerTmp;
+                menuTextSerialized.ApplyModifiedPropertiesWithoutUndo();
+                EditorUtility.SetDirty(menuLocalizedText);
+            }
 
             Transform guestPanel = FindRelative(canvasRoot, "Canvas/GuestPanel");
             if (guestPanel != null)
@@ -93,6 +128,16 @@ namespace Catsss.EditorTools
 
             SerializedObject controllerSerialized = new SerializedObject(controller);
             controllerSerialized.FindProperty("localizedText").objectReferenceValue = menuLocalizedText;
+            controllerSerialized.FindProperty("mainPanelRoot").objectReferenceValue = null;
+            controllerSerialized.FindProperty("settingsPanelRoot").objectReferenceValue =
+                FindRelative(canvasRoot, "Canvas/SettingsPanel")?.gameObject;
+            controllerSerialized.FindProperty("settingsButtonOpenPanel").objectReferenceValue =
+                FindRelative(canvasRoot, "Canvas/MainMenu/SettingsButton")?.GetComponent<Button>();
+            controllerSerialized.FindProperty("settingsBackButton").objectReferenceValue =
+                FindRelative(canvasRoot, "Canvas/SettingsPanel/BackButton")?.GetComponent<Button>();
+            controllerSerialized.FindProperty("levelSelectPanelRoot").objectReferenceValue =
+                FindRelative(canvasRoot, "Canvas/LevelSelectPanel")?.gameObject;
+            controllerSerialized.FindProperty("levelSelectController").objectReferenceValue = levelSelect;
             controllerSerialized.ApplyModifiedPropertiesWithoutUndo();
 
             EditorSceneManager.MarkSceneDirty(scene);
@@ -126,6 +171,37 @@ namespace Catsss.EditorTools
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.textWrappingMode = TextWrappingModes.Normal;
             tmp.text = "Connection error";
+
+            return tmp;
+        }
+
+        private static TMP_Text EnsureSessionBannerText(Transform mainMenuPanel)
+        {
+            Transform existing = mainMenuPanel.Find("SessionBannerText");
+
+            if (existing != null && existing.TryGetComponent(out TMP_Text existingTmp))
+            {
+                existing.gameObject.SetActive(false);
+                return existingTmp;
+            }
+
+            var bannerObject = new GameObject("SessionBannerText", typeof(RectTransform), typeof(TextMeshProUGUI));
+            bannerObject.transform.SetParent(mainMenuPanel, false);
+            bannerObject.SetActive(false);
+
+            RectTransform rectTransform = bannerObject.GetComponent<RectTransform>();
+            rectTransform.anchorMin = new Vector2(0.5f, 0f);
+            rectTransform.anchorMax = new Vector2(0.5f, 0f);
+            rectTransform.pivot = new Vector2(0.5f, 0f);
+            rectTransform.anchoredPosition = new Vector2(0f, 24f);
+            rectTransform.sizeDelta = new Vector2(760f, 72f);
+
+            TMP_Text tmp = bannerObject.GetComponent<TextMeshProUGUI>();
+            tmp.fontSize = 26f;
+            tmp.color = new Color(0.95f, 0.75f, 0.2f, 1f);
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.textWrappingMode = TextWrappingModes.Normal;
+            tmp.text = "Session ended";
 
             return tmp;
         }
@@ -198,6 +274,24 @@ namespace Catsss.EditorTools
 
         private static void AssignLocalizedReference(
             MainMenuLocalizedText component,
+            string propertyName,
+            StringTableCollection collection,
+            string key,
+            string englishFallback)
+        {
+            if (collection == null)
+            {
+                return;
+            }
+
+            SerializedObject serialized = new SerializedObject(component);
+            ApplyLocalizedString(serialized.FindProperty(propertyName), collection, key, englishFallback);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(component);
+        }
+
+        private static void AssignLocalizedReference(
+            LevelSelectController component,
             string propertyName,
             StringTableCollection collection,
             string key,

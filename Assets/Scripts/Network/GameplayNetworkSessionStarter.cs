@@ -1,13 +1,13 @@
 using System.Collections;
 using Catsss.Menu;
-using Unity.Netcode;
+using Catsss.Menu.Flow;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace Catsss.Network
 {
     /// <summary>
-    /// После перехода из MainMenu выполняет NGO connect по данным из <see cref="NetworkSessionIntent"/>.
+    /// Dev-fallback NGO на gameplay-сцене: прямой Play Sandbox (host) или CLI <c>-join</c> (client).
+    /// Основной путь — <see cref="ApplicationFlowController"/> через MainMenu.
     /// </summary>
     public sealed class GameplayNetworkSessionStarter : MonoBehaviour
     {
@@ -17,172 +17,77 @@ namespace Catsss.Network
         [SerializeField]
         private string localhostTargetForJoinCli = "127.0.0.1";
 
-        [Header("Client connect from menu")]
-        [SerializeField] private string mainMenuSceneName = "MainMenu";
-
-        [SerializeField, Min(1f)]
-        private float clientConnectTimeoutSeconds = 10f;
-
         private IEnumerator Start()
         {
-            ConnectionManager manager = FindAnyObjectByType<ConnectionManager>();
-
-            if (NetworkSessionIntent.TryConsumeLaunch(out NetworkSessionIntent.LaunchPayload pending))
+            if (ShouldSkipBecauseMenuFlowHandlesSession())
             {
-                if (manager == null)
-                {
-                    Debug.LogError("GameplayNetworkSessionStarter: ConnectionManager не найден.");
-                    MenuLoadingOverlay.Instance?.HideAndDestroy();
-                    yield break;
-                }
-
-                if (pending.IsHost)
-                {
-                    yield return StartHostFromMenu(manager, pending);
-                }
-                else
-                {
-                    yield return StartClientFromMenu(manager, pending);
-                }
-
                 yield break;
             }
+
+            ConnectionManager manager = FindAnyObjectByType<ConnectionManager>();
 
             if (DevelopmentJoinArgs.WantsClientFromCommandLine())
             {
                 if (manager == null)
                 {
-                    Debug.LogError("GameplayNetworkSessionStarter (−join): ConnectionManager не найден.");
-                    MenuLoadingOverlay.Instance?.HideAndDestroy();
+                    Debug.LogError("[GameplayNetworkSessionStarter] ConnectionManager не найден (−join).");
+                    TryHideDevOverlayOnly();
                     yield break;
                 }
 
                 manager.ConfigureForClient(localhostTargetForJoinCli.Trim(), manager.GameplayPort);
                 manager.StartClient();
-                MenuLoadingOverlay.Instance?.HideAndDestroy();
+                TryHideDevOverlayOnly();
+                NotifyDevSessionActive();
                 yield break;
             }
 
             if (!fallbackStartHostWhenNoMenuIntent)
             {
                 Debug.LogWarning(
-                    "GameplayNetworkSessionStarter: нет intent, −join выключён и fallback-хост запрещён — сеть не стартует.");
-                MenuLoadingOverlay.Instance?.HideAndDestroy();
+                    "[GameplayNetworkSessionStarter] Fallback-хост отключён — сеть не стартует без MainMenu flow.");
+                TryHideDevOverlayOnly();
                 yield break;
             }
 
-            manager?.StartHost();
-            MenuLoadingOverlay.Instance?.HideAndDestroy();
-        }
+            if (manager == null)
+            {
+                Debug.LogError("[GameplayNetworkSessionStarter] ConnectionManager не найден.");
+                TryHideDevOverlayOnly();
+                yield break;
+            }
 
-        private IEnumerator StartHostFromMenu(ConnectionManager manager, NetworkSessionIntent.LaunchPayload pending)
-        {
-            manager.ConfigureForHost(pending.Port);
             manager.StartHost();
+            TryHideDevOverlayOnly();
+            NotifyDevSessionActive();
+        }
 
-            if (pending.HoldLoadingOverlaySecondsAfterConnect > 0f)
+        private static bool ShouldSkipBecauseMenuFlowHandlesSession()
+        {
+            if (!AppFlow.TryGet(out IAppFlowCommands flow))
             {
-                yield return new WaitForSecondsRealtime(pending.HoldLoadingOverlaySecondsAfterConnect);
+                return false;
+            }
+
+            return flow.IsSessionStartupHandled || flow.IsLoadingFlow || flow.IsReturningFlow;
+        }
+
+        /// <summary>Не трогаем overlay, созданный MainMenu flow во время Loading/Returning.</summary>
+        private static void TryHideDevOverlayOnly()
+        {
+            if (AppFlow.TryGet(out IAppFlowCommands flow)
+                && (flow.IsLoadingFlow || flow.IsReturningFlow))
+            {
+                return;
             }
 
             MenuLoadingOverlay.Instance?.HideAndDestroy();
         }
 
-        private IEnumerator StartClientFromMenu(ConnectionManager manager, NetworkSessionIntent.LaunchPayload pending)
+        private static void NotifyDevSessionActive()
         {
-            if (!ClientConnectInputValidator.TryValidate(pending.ClientRemoteHost, pending.Port, out ClientConnectInputError inputError))
-            {
-                Debug.LogWarning($"[GameplayNetworkSessionStarter] Rejected stored client input: {inputError}");
-                MenuConnectionFeedback.SetPendingGuestInputError(inputError);
-                yield return ReturnToGuestMenu(manager, stopNetwork: false);
-                yield break;
-            }
-
-            bool connectionFailed;
-            string failureLogMessage = null;
-
-            void OnConnectionFailed(string message)
-            {
-                connectionFailed = true;
-                failureLogMessage = message;
-            }
-
-            connectionFailed = false;
-            manager.ConnectionFailed += OnConnectionFailed;
-
-            manager.ConfigureForClient(pending.ClientRemoteHost, pending.Port);
-            manager.StartClient();
-
-            yield return null;
-
-            if (connectionFailed)
-            {
-                manager.ConnectionFailed -= OnConnectionFailed;
-                Debug.LogWarning($"[GameplayNetworkSessionStarter] Client connect failed immediately: {failureLogMessage}");
-                MenuConnectionFeedback.SetPendingGuestConnectionError();
-                yield return ReturnToGuestMenu(manager, stopNetwork: true);
-                yield break;
-            }
-
-            float elapsed = 0f;
-
-            while (elapsed < clientConnectTimeoutSeconds)
-            {
-                if (connectionFailed)
-                {
-                    break;
-                }
-
-                NetworkManager networkManager = NetworkManager.Singleton;
-
-                if (networkManager != null && networkManager.IsConnectedClient)
-                {
-                    manager.ConnectionFailed -= OnConnectionFailed;
-
-                    if (pending.HoldLoadingOverlaySecondsAfterConnect > 0f)
-                    {
-                        yield return new WaitForSecondsRealtime(pending.HoldLoadingOverlaySecondsAfterConnect);
-                    }
-
-                    MenuLoadingOverlay.Instance?.HideAndDestroy();
-                    yield break;
-                }
-
-                elapsed += Time.unscaledDeltaTime;
-                yield return null;
-            }
-
-            manager.ConnectionFailed -= OnConnectionFailed;
-            Debug.LogWarning(
-                connectionFailed
-                    ? $"[GameplayNetworkSessionStarter] Client connect failed: {failureLogMessage}"
-                    : $"[GameplayNetworkSessionStarter] Client connect timeout ({clientConnectTimeoutSeconds:0.#}s) to {pending.ClientRemoteHost}:{pending.Port}.");
-
-            MenuConnectionFeedback.SetPendingGuestConnectionError();
-            yield return ReturnToGuestMenu(manager, stopNetwork: true);
-        }
-
-        private IEnumerator ReturnToGuestMenu(ConnectionManager manager, bool stopNetwork)
-        {
-            if (stopNetwork && manager != null)
-            {
-                manager.Stop();
-            }
-
-            MenuLoadingOverlay.Instance?.HideAndDestroy();
-
-            AsyncOperation loadMenu = SceneManager.LoadSceneAsync(mainMenuSceneName, LoadSceneMode.Single);
-
-            if (loadMenu == null)
-            {
-                Debug.LogError($"[GameplayNetworkSessionStarter] Не удалось загрузить сцену '{mainMenuSceneName}'.");
-                yield break;
-            }
-
-            while (!loadMenu.isDone)
-            {
-                yield return null;
-            }
+            IAppFlowCommands flow = AppFlow.EnsureExists();
+            flow.NotifyGameplaySessionActive();
         }
     }
 }

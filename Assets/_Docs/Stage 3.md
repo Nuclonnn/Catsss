@@ -55,7 +55,7 @@
 | События (опционально) | `TrialProgressEventChannel` — фазы Started / Completed / Cancelled |
 | Локализация | `LocalizedTextReference`, `UI_Strings` (RU/EN), editor setup |
 | World hints | `WorldTextHintDefinition`, `WorldTextHintTrigger`, `WorldTextHintPresenter` |
-| Guest connect UX | `ClientConnectInputValidator`, `MenuConnectionFeedback`, локализованные ошибки |
+| Guest connect UX | `ClientConnectInputValidator`, `MenuReturnFeedback`, локализованные ошибки |
 
 ---
 

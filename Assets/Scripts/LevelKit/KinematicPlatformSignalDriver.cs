@@ -1,21 +1,14 @@
-using Catsss.Core.Events;
-using Unity.Netcode;
 using UnityEngine;
 
 namespace Catsss.LevelKit
 {
     /// <summary>Подписывается на EmptyEventChannel и переводит сигналы в команды KinematicPlatform (server-only).</summary>
     [DisallowMultipleComponent]
-    public sealed class KinematicPlatformSignalDriver : MonoBehaviour
+    public sealed class KinematicPlatformSignalDriver : EmptyEventChannelSignalDriverBase
     {
         [Header("Setup")]
         [SerializeField] private KinematicPlatformSignalDriverPreset preset = KinematicPlatformSignalDriverPreset.Custom;
         [SerializeField] private KinematicPlatform platform;
-
-        [Header("Channels")]
-        [SerializeField] private EmptyEventChannel pressedChannel;
-        [SerializeField] private EmptyEventChannel releasedChannel;
-        [SerializeField] private EmptyEventChannel oneShotChannel;
 
         [Header("Actions")]
         [SerializeField] private KinematicPlatformSignalAction onPressed = KinematicPlatformSignalAction.PlayForward;
@@ -31,93 +24,24 @@ namespace Catsss.LevelKit
 
         private void Reset()
         {
-            if (platform == null)
-            {
-                platform = GetComponent<KinematicPlatform>();
-            }
+            ResolvePlatformReference();
         }
 
         private void Awake()
         {
-            if (platform == null)
-            {
-                platform = GetComponent<KinematicPlatform>();
-            }
+            ResolvePlatformReference();
         }
 
-        private void OnEnable()
+        protected override void OnEnable()
         {
-            if (platform == null)
-            {
-                platform = GetComponent<KinematicPlatform>();
-            }
-
+            ResolvePlatformReference();
             WarnIfDuplicateChannels();
-            SubscribeChannels();
+            base.OnEnable();
         }
 
-        private void OnDisable()
+        protected override void HandlePressedServer()
         {
-            UnsubscribeChannels();
-        }
-
-        private void SubscribeChannels()
-        {
-            if (pressedChannel != null)
-            {
-                pressedChannel.Raised += OnPressed;
-            }
-
-            if (releasedChannel != null)
-            {
-                releasedChannel.Raised += OnReleased;
-            }
-
-            if (oneShotChannel != null)
-            {
-                oneShotChannel.Raised += OnOneShot;
-            }
-        }
-
-        private void UnsubscribeChannels()
-        {
-            if (pressedChannel != null)
-            {
-                pressedChannel.Raised -= OnPressed;
-            }
-
-            if (releasedChannel != null)
-            {
-                releasedChannel.Raised -= OnReleased;
-            }
-
-            if (oneShotChannel != null)
-            {
-                oneShotChannel.Raised -= OnOneShot;
-            }
-        }
-
-        private void WarnIfDuplicateChannels()
-        {
-            if (pressedChannel == null)
-            {
-                return;
-            }
-
-            if ((releasedChannel != null && pressedChannel == releasedChannel)
-                || (oneShotChannel != null && pressedChannel == oneShotChannel)
-                || (releasedChannel != null && oneShotChannel != null && releasedChannel == oneShotChannel))
-            {
-                Debug.LogWarning(
-                    $"[KinematicPlatformSignalDriver] {name}: один EmptyEventChannel назначен на несколько слотов. "
-                    + "Каждый сигнал вызовет все Actions сразу. Раздели каналы или оставь One Shot пустым.",
-                    this);
-            }
-        }
-
-        private void OnPressed(EmptyEvent _)
-        {
-            if (!IsServerAuthority() || platform == null || onPressed == KinematicPlatformSignalAction.None)
+            if (platform == null || onPressed == KinematicPlatformSignalAction.None)
             {
                 return;
             }
@@ -125,9 +49,9 @@ namespace Catsss.LevelKit
             platform.ApplySignalAction(onPressed, pressedTravelMode);
         }
 
-        private void OnReleased(EmptyEvent _)
+        protected override void HandleReleasedServer()
         {
-            if (!IsServerAuthority() || platform == null || onReleased == KinematicPlatformSignalAction.None)
+            if (platform == null || onReleased == KinematicPlatformSignalAction.None)
             {
                 return;
             }
@@ -135,14 +59,40 @@ namespace Catsss.LevelKit
             platform.ApplySignalAction(onReleased, releasedTravelMode);
         }
 
-        private void OnOneShot(EmptyEvent _)
+        protected override void HandleOneShotServer()
         {
-            if (!IsServerAuthority() || platform == null || onOneShot == KinematicPlatformSignalAction.None)
+            if (platform == null || onOneShot == KinematicPlatformSignalAction.None)
             {
                 return;
             }
 
             platform.ApplySignalAction(onOneShot, oneShotTravelMode);
+        }
+
+        private void ResolvePlatformReference()
+        {
+            if (platform == null)
+            {
+                platform = GetComponent<KinematicPlatform>();
+            }
+        }
+
+        private void WarnIfDuplicateChannels()
+        {
+            if (PressedChannel == null)
+            {
+                return;
+            }
+
+            if ((ReleasedChannel != null && PressedChannel == ReleasedChannel)
+                || (OneShotChannel != null && PressedChannel == OneShotChannel)
+                || (ReleasedChannel != null && OneShotChannel != null && ReleasedChannel == OneShotChannel))
+            {
+                Debug.LogWarning(
+                    $"[KinematicPlatformSignalDriver] {name}: один EmptyEventChannel назначен на несколько слотов. "
+                    + "Каждый сигнал вызовет все Actions сразу. Раздели каналы или оставь One Shot пустым.",
+                    this);
+            }
         }
 
         /// <summary>Editor: заполнить поля по пресету. Custom не трогает значения.</summary>
@@ -183,12 +133,6 @@ namespace Catsss.LevelKit
                     pressedTravelMode = KinematicPlatformSignalTravelMode.Yoyo;
                     break;
             }
-        }
-
-        private static bool IsServerAuthority()
-        {
-            NetworkManager networkManager = NetworkManager.Singleton;
-            return networkManager != null && networkManager.IsServer;
         }
     }
 }

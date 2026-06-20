@@ -167,7 +167,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ab3771a6f7a2f7043a990fc8d7f060ca, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Catsss.Charges.Projectile.ChargeProjectile
+  m_EditorClassIdentifier: Assembly-CSharp::Catsss.Gameplay.Charges.Projectile.ChargeProjectile
   ShowTopMostFoldoutHeaderGroup: 1
   enableDebugLogs: 1
 --- !u!1 &5729696821995710474

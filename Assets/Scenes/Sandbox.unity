@@ -2105,6 +2105,14 @@ PrefabInstance:
       propertyPath: m_Radius
       value: 0.5
       objectReference: {fileID: 0}
+    - target: {fileID: 5922238487321583276, guid: e6b325e03700c76408c91eaf11d544aa, type: 3}
+      propertyPath: m_Speed
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 5922238487321583276, guid: e6b325e03700c76408c91eaf11d544aa, type: 3}
+      propertyPath: m_Acceleration
+      value: 30
+      objectReference: {fileID: 0}
     - target: {fileID: 7121251824901815372, guid: e6b325e03700c76408c91eaf11d544aa, type: 3}
       propertyPath: m_Name
       value: MouseRoot

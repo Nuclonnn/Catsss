@@ -75,6 +75,78 @@ MonoBehaviour:
     m_Key: menu.error.invalid_port
     m_Metadata:
       m_Items: []
+  - m_Id: 10197850200530944
+    m_Key: menu.button.settings
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10197850288611328
+    m_Key: settings.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10197850288611329
+    m_Key: settings.sensitivity
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10197850288611330
+    m_Key: settings.language
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10197850288611331
+    m_Key: settings.language.english
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10197850288611332
+    m_Key: settings.language.russian
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10197850288611333
+    m_Key: menu.banner.host_disconnected
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10197850288611334
+    m_Key: menu.banner.session_ended
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10874351405293568
+    m_Key: menu.level_select.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10874351489179648
+    m_Key: menu.level_select.play
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10874351489179649
+    m_Key: menu.level_select.locked
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10874351489179650
+    m_Key: level.sandbox.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10874351489179651
+    m_Key: level.level02.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11012109981507584
+    m_Key: menu.error.scene_load_failed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11012110061199360
+    m_Key: pause.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11012110061199361
+    m_Key: pause.resume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11012110061199362
+    m_Key: pause.settings
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11012110061199363
+    m_Key: pause.exit_session
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

@@ -19,7 +19,10 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 512
   routeSpeed: 4
+  routeTurnSpeedDegPerSec: 720
+  presenceFadeDuration: 0.25
   rubberbandFarDistance: 15
   rubberbandSlowMultiplier: 0.3
   rubberbandNearDistance: 5
   domeFleeDistance: 6
+  domeAgentSpeed: 4

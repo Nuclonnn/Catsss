@@ -13,21 +13,23 @@
 | Область | Назначение |
 |--------|-------------|
 | `Scripts/Core/` | FSM, Events, Services, Timing, **Localization**, **WorldHints** |
-| `Scripts/Network/` | NGO, UTP, session starter, **ServerNetworkTransform**, **ClientConnectInputValidator** |
-| `Scripts/Menu/` | MainMenu UI, intent, overlay, **MenuConnectionFeedback** |
-| `Scripts/Player/` | Контроллер, FSM, ввод, камера, interaction, **`AeroZoneReceiver`** |
+| `Scripts/Network/` | NGO, UTP, session starter, **GameplaySessionGuard**, **SessionEndSignal** |
+| `Scripts/Menu/` | MainMenu UI, **ApplicationFlowController FSM**, `MenuConfig`, level select, settings |
+| `Scripts/Menu/Flow/` | FSM states, **Services/** (connect, return, scene load), **ReturnFeedback/** handlers |
+| `Scripts/Gameplay/` | **GameplayPauseController**, **Mouse/**, **Charges/Projectile/** |
+| `Scripts/Player/` | Контроллер, FSM, ввод, камера, interaction, **`AeroZoneReceiver`**, charge components |
 | `Scripts/Player/Aim/` | Aim mode, траектория, `PlayerThrowDirectionResolver` |
-| `Scripts/Charges/` | Заряды, **`Charges/Projectile/`**, перманентные модификаторы |
 | `Scripts/Trials/` | Пилоны, зона bounds, реестр, штрафы |
 | `Scripts/LevelKit/` | **Stage 5 ✅:** MagicSeal, KinematicPlatform, AntiMagicZone, AeroZone |
-| `Scripts/Mouse/` | **Stage 6 ✅:** MouseBrain FSM, routes, cue, trial reactions, dome |
 | `Scripts/Core/Path/` | `WaypointPathSnapshot`, `WaypointPathFollower` (platforms + mouse) |
 | `Scripts/Interaction/` | `IInteractable`, промпт (через world hints) |
 | `Scripts/Rendering/` | URP outline для фокуса взаимодействия |
 | `Scripts/Configs/` | `GameConfig`, каталоги зарядов/перманентов |
-| `Scripts/Editor/` | Bootstrap локализации, world hints, KinematicPlatform gizmo, **MouseRouteEditor** |
+| `Scripts/Settings/` | `UserSettingsService` (чувствительность камеры, prefs) |
+| `Scripts/Dev/` | Dev-only утилиты (`MouseDebugBootstrap`, `PlayerAimDebugLog`) |
+| `Scripts/Editor/` | Bootstrap локализации, world hints, setup menus |
 | `Localization/` | Unity Localization: locales, `UI_Strings` |
-| `Configs/` | SO: GameConfig, Trials, AllBaffs, **WorldHints** |
+| `Configs/` | SO: GameConfig, Trials, AllBaffs, **MenuConfig**, **LevelCatalog**, **WorldHints** |
 | `Prefabs/` | PlayerRoot, PylonStart/End, **LevelKit/**, **Mouse/**, **WorldTextHintTriggerRoot** |
 | `Scenes/` | **MainMenu** (вход), **Sandbox** (геймплей) |
 | `_Docs/` | Документация проекта |
@@ -70,13 +72,15 @@
 
 | Компонент | Ответственность |
 |-----------|-----------------|
-| `ConnectionManager` | UTP `SetConnectionData`, host listen `0.0.0.0`, Start/Stop, transport role для сообщений об ошибках |
-| `NetworkSessionIntent` | Статическая передача host/client между сценами |
-| `GameplayNetworkSessionStarter` | Intent → NGO; client timeout; return to menu |
+| `ApplicationFlowController` | DontDestroyOnLoad FSM: MainMenu → Loading → InGame → Returning |
+| `ConnectionManager` | UTP `SetConnectionData`, host listen `0.0.0.0`, Start/Stop |
+| `NetworkSessionIntent.LaunchPayload` | DTO host/client; основной путь — in-memory в flow |
+| `GameplayNetworkSessionStarter` | Fallback NGO на Sandbox (dev Play, `-join`) |
+| `GameplaySessionGuard` | Мониторинг disconnect / graceful session end |
 | `ClientConnectInputValidator` | IPv4 / localhost / hostname / port до UTP |
-| `MenuConnectionFeedback` | Обратная связь MainMenu после failed connect |
+| `MenuReturnFeedback` | Обратная связь MainMenu после возврата из сессии |
 | `ClientNetworkTransform` | Client-authoritative transform |
-| `NetworkPlayerEventsRelay` | RPC-скелет для будущего визуала |
+| `NetworkPlayerEventsRelay` | Manual RPC для визуала (без NetworkAnimator) |
 
 **Не реализовано:** Unity Relay, UGS, join-код.
 
@@ -193,6 +197,8 @@ AeroZone (trigger) → AeroZoneReceiver (PlayerRoot) → NetworkPlayerController
 
 ### MouseBrain FSM (server)
 
+Состояния — отдельные файлы в `Scripts/Gameplay/Mouse/States/`; переходы — `MouseBrainFsmTransitions`.
+
 ```
 Hidden          — spawn в home burrow, presence Hidden
 RouteFollow     — WaypointPathFollower, Spectral, waypoint events
@@ -215,7 +221,7 @@ MouseRoute EndMode EnterDome / MouseDomeZone
 - **ReturnHidden:** скрытие на последней точке (без burrow teleport).
 - **Rubberbanding:** параметры в `MouseConfig`; применение — **Stage 7.2**.
 - **Визуал:** `MouseVisualStub` (client) — fade + MaterialPropertyBlock; не в FSM.
-- **Dev:** `MouseDebugBootstrap`, `MouseCaughtListener` (stub до GameFlowManager).
+- **Dev:** `Scripts/Dev/MouseDebugBootstrap`, `MouseCaughtListener` (stub до GameFlowManager).
 - **Namespace:** `Catsss.Gameplay.Mouse` (избегает конфликта с Input System `Mouse`).
 
 Подробнее: **`Stage 6.md`**.
@@ -267,9 +273,9 @@ Interaction reuse: `InteractionPromptView` : `WorldTextHintView`.
 | `Catsss.Core.*` | FSM, Events, Services, Timing, Localization, WorldHints |
 | `Catsss.Network` | Connection, validation, session |
 | `Catsss.Menu` | MainMenu flow |
-| `Catsss.Player` | Player controller, states, camera |
-| `Catsss.Charges` | Charge + permanent modifiers |
-| `Catsss.Charges.Projectile` | Снаряд, telegraph, throw signals |
+| `Catsss.Player` | Player controller, states, camera, charge/permanent modifiers |
+| `Catsss.Gameplay.Charges.Projectile` | Снаряд, telegraph, throw signals |
+| `Catsss.Gameplay` | GameplayPauseController |
 | `Catsss.Player.Aim` | Aim controller, trajectory, throw direction |
 | `Catsss.Trials` | Trial pylons, bounds, registry, penalty reasons |
 | `Catsss.LevelKit` | Stage 5 puzzle blocks: MagicSeal, KinematicPlatform, AntiMagicZone, AeroZone |

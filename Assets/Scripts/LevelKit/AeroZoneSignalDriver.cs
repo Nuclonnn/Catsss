@@ -1,4 +1,3 @@
-using Catsss.Core.Events;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -8,15 +7,10 @@ namespace Catsss.LevelKit
     [DisallowMultipleComponent]
     [RequireComponent(typeof(AeroZone))]
     [RequireComponent(typeof(NetworkObject))]
-    public sealed class AeroZoneSignalDriver : NetworkBehaviour
+    public sealed class AeroZoneSignalDriver : NetworkEmptyEventChannelSignalDriverBase
     {
         [Header("Target")]
         [SerializeField] private AeroZone zone;
-
-        [Header("Channels")]
-        [SerializeField] private EmptyEventChannel pressedChannel;
-        [SerializeField] private EmptyEventChannel releasedChannel;
-        [SerializeField] private EmptyEventChannel oneShotChannel;
 
         [Header("Actions")]
         [SerializeField] private AeroZoneSignalBinding onPressed;
@@ -25,92 +19,39 @@ namespace Catsss.LevelKit
 
         private void Reset()
         {
-            if (zone == null)
-            {
-                zone = GetComponent<AeroZone>();
-            }
+            ResolveZoneReference();
         }
 
         private void Awake()
         {
-            if (zone == null)
-            {
-                zone = GetComponent<AeroZone>();
-            }
+            ResolveZoneReference();
         }
 
-        private void OnEnable()
-        {
-            if (pressedChannel != null)
-            {
-                pressedChannel.Raised += OnPressed;
-            }
-
-            if (releasedChannel != null)
-            {
-                releasedChannel.Raised += OnReleased;
-            }
-
-            if (oneShotChannel != null)
-            {
-                oneShotChannel.Raised += OnOneShot;
-            }
-        }
-
-        private void OnDisable()
-        {
-            if (pressedChannel != null)
-            {
-                pressedChannel.Raised -= OnPressed;
-            }
-
-            if (releasedChannel != null)
-            {
-                releasedChannel.Raised -= OnReleased;
-            }
-
-            if (oneShotChannel != null)
-            {
-                oneShotChannel.Raised -= OnOneShot;
-            }
-        }
-
-        private void OnPressed(EmptyEvent _)
+        protected override void HandlePressedServer()
         {
             ApplyBindingServer(onPressed);
         }
 
-        private void OnReleased(EmptyEvent _)
+        protected override void HandleReleasedServer()
         {
             ApplyBindingServer(onReleased);
         }
 
-        private void OnOneShot(EmptyEvent _)
+        protected override void HandleOneShotServer()
         {
             ApplyBindingServer(onOneShot);
         }
 
         private void ApplyBindingServer(AeroZoneSignalBinding binding)
         {
-            if (!IsServerAuthority() || zone == null)
+            if (zone == null)
             {
                 return;
             }
 
-            bool zoneActive = ApplyAction(zone.IsZoneActive, binding.zoneAction);
+            bool zoneActive = ZoneSignalActionUtility.Apply(zone.IsZoneActive, binding.zoneAction);
             zone.SetRuntimeStateServer(zoneActive);
             SyncVisualStateClientRpc(zoneActive);
-        }
-
-        private static bool ApplyAction(bool current, AeroZoneSignalAction action)
-        {
-            return action switch
-            {
-                AeroZoneSignalAction.Enable => true,
-                AeroZoneSignalAction.Disable => false,
-                AeroZoneSignalAction.Toggle => !current,
-                _ => current,
-            };
         }
 
         [ClientRpc]
@@ -124,10 +65,12 @@ namespace Catsss.LevelKit
             zone.ApplyVisualStateClient(zoneActive);
         }
 
-        private static bool IsServerAuthority()
+        private void ResolveZoneReference()
         {
-            NetworkManager networkManager = NetworkManager.Singleton;
-            return networkManager != null && networkManager.IsServer;
+            if (zone == null)
+            {
+                zone = GetComponent<AeroZone>();
+            }
         }
     }
 }

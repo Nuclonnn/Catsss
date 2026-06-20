@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82780baf16fd96346861e9dcdeb70379, type: 3}
+  m_Name: LevelCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::Catsss.Menu.Levels.LevelCatalog
+  levels:
+  - sceneName: Sandbox
+    displayNameKey: level.sandbox.name
+    thumbnail: {fileID: 21300000, guid: 380858d5485133942af893b8d1a736e9, type: 3}
+    isUnlocked: 1
+    sortOrder: 0
+  - sceneName: Sandbox_1
+    displayNameKey: level.level02.name
+    thumbnail: {fileID: 21300000, guid: 98c55932b6ff69a45bbd382a9164ddf6, type: 3}
+    isUnlocked: 1
+    sortOrder: 1

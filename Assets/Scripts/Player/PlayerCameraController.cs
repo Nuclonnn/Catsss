@@ -1,5 +1,7 @@
 using Catsss.Configs;
+using Catsss.Core.Services;
 using Catsss.Player.Aim;
+using Catsss.Settings;
 using Unity.Netcode;
 using Unity.Cinemachine;
 using Unity.Cinemachine.TargetTracking;
@@ -48,8 +50,15 @@ namespace Catsss.Player
         [Header("Owner Settings")]
         [SerializeField] private bool lockCursorForOwner = true;
 
+        private float _baseMouseHorizontalSensitivity;
+        private float _baseMouseVerticalSensitivity;
+        private UserSettingsService _userSettings;
+
         private void Awake()
         {
+            _baseMouseHorizontalSensitivity = mouseHorizontalSensitivity;
+            _baseMouseVerticalSensitivity = mouseVerticalSensitivity;
+
             if (playerController == null)
             {
                 playerController = GetComponentInParent<NetworkPlayerController>();
@@ -126,20 +135,33 @@ namespace Catsss.Player
 
             if (lockCursorForOwner)
             {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
+                SetOwnerCursorLocked(true);
             }
+
+            BindUserSettings();
         }
 
         public override void OnNetworkDespawn()
         {
+            UnbindUserSettings();
             SetCameraActive(false);
 
             if (IsOwner && lockCursorForOwner)
             {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
+                SetOwnerCursorLocked(false);
             }
+        }
+
+        /// <summary>Локальный lock/unlock курсора (пауза, меню). Только owner.</summary>
+        public void SetOwnerCursorLocked(bool locked)
+        {
+            if (!IsOwner || !lockCursorForOwner)
+            {
+                return;
+            }
+
+            Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
+            Cursor.visible = !locked;
         }
 
         private void Update()
@@ -196,8 +218,9 @@ namespace Catsss.Player
 
             if (inputReader.IsLookInputFromMouse)
             {
-                orbitalFollow.HorizontalAxis.Value += lookInput.x * mouseHorizontalSensitivity;
-                orbitalFollow.VerticalAxis.Value += lookInput.y * mouseVerticalSensitivity * verticalSign;
+                float multiplier = GetMouseSensitivityMultiplier();
+                orbitalFollow.HorizontalAxis.Value += lookInput.x * _baseMouseHorizontalSensitivity * multiplier;
+                orbitalFollow.VerticalAxis.Value += lookInput.y * _baseMouseVerticalSensitivity * multiplier * verticalSign;
             }
             else
             {
@@ -262,6 +285,26 @@ namespace Catsss.Player
             {
                 cinemachineCamera.enabled = isActive;
             }
+        }
+
+        private void BindUserSettings()
+        {
+            ServiceLocator.TryGet(out _userSettings);
+        }
+
+        private void UnbindUserSettings()
+        {
+            _userSettings = null;
+        }
+
+        private float GetMouseSensitivityMultiplier()
+        {
+            if (_userSettings == null)
+            {
+                ServiceLocator.TryGet(out _userSettings);
+            }
+
+            return _userSettings?.MouseSensitivityMultiplier ?? UserSettingsService.DefaultMouseSensitivityMultiplier;
         }
     }
 }

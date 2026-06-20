@@ -27,8 +27,17 @@ namespace Catsss.Menu
         [SerializeField] private LocalizedTextReference invalidAddressText = new();
         [SerializeField] private LocalizedTextReference invalidPortText = new();
 
+        [Header("Session return banner")]
+        [SerializeField] private TMP_Text sessionBannerTmp;
+        [SerializeField] private Text sessionBannerLegacy;
+        [SerializeField] private LocalizedTextReference hostDisconnectedText = new();
+        [SerializeField] private LocalizedTextReference sessionEndedText = new();
+        [SerializeField] private LocalizedTextReference sceneLoadFailedText = new();
+
         private LocalizedTextReference _activeErrorText;
         private bool _guestErrorVisible;
+        private LocalizedTextReference _activeSessionBannerText;
+        private bool _sessionBannerVisible;
 
         private void OnEnable()
         {
@@ -39,6 +48,11 @@ namespace Catsss.Menu
             {
                 BindActiveGuestError();
             }
+
+            if (_sessionBannerVisible)
+            {
+                BindActiveSessionBanner();
+            }
         }
 
         private void OnDisable()
@@ -47,6 +61,7 @@ namespace Catsss.Menu
             ipv4HintFormat.Unbind();
             noIpFoundText.Unbind();
             UnbindAllGuestErrors();
+            UnbindSessionBanner();
         }
 
         private void Start()
@@ -97,6 +112,44 @@ namespace Catsss.Menu
             SetGuestErrorVisible(false);
         }
 
+        public void ShowSessionBanner(MenuReturnReason reason, string context = null)
+        {
+            if (reason == MenuReturnReason.SceneLoadFailed)
+            {
+                string format = sceneLoadFailedText.ResolveDisplayText();
+                string sceneName = string.IsNullOrWhiteSpace(context) ? "?" : context;
+                ApplySessionBanner(string.Format(format, sceneName));
+                SetSessionBannerVisible(true);
+                return;
+            }
+
+            LocalizedTextReference text = reason switch
+            {
+                MenuReturnReason.HostDisconnected => hostDisconnectedText,
+                MenuReturnReason.SessionEnded => sessionEndedText,
+                MenuReturnReason.SceneLoadFailed => sceneLoadFailedText,
+                _ => sessionEndedText,
+            };
+
+            if (sessionBannerTmp == null && sessionBannerLegacy == null)
+            {
+                Debug.LogWarning("[MainMenuLocalizedText] Нет UI для session banner.");
+                return;
+            }
+
+            _sessionBannerVisible = true;
+            _activeSessionBannerText = text;
+            BindActiveSessionBanner();
+            SetSessionBannerVisible(true);
+        }
+
+        public void ClearSessionBanner()
+        {
+            _sessionBannerVisible = false;
+            UnbindSessionBanner();
+            SetSessionBannerVisible(false);
+        }
+
         private void ShowGuestError(LocalizedTextReference text)
         {
             if (connectionErrorTmp == null && connectionErrorLegacy == null)
@@ -141,6 +194,11 @@ namespace Catsss.Menu
             {
                 ApplyGuestError(_activeErrorText.ResolveDisplayText());
             }
+
+            if (_sessionBannerVisible && _activeSessionBannerText != null)
+            {
+                ApplySessionBanner(_activeSessionBannerText.ResolveDisplayText());
+            }
         }
 
         private void ApplyIpv4Hint(string value)
@@ -179,6 +237,53 @@ namespace Catsss.Menu
             if (connectionErrorLegacy != null)
             {
                 connectionErrorLegacy.gameObject.SetActive(visible);
+            }
+        }
+
+        private void BindActiveSessionBanner()
+        {
+            LocalizedTextReference target = _activeSessionBannerText;
+            UnbindSessionBanner();
+            _activeSessionBannerText = target;
+
+            if (_activeSessionBannerText != null)
+            {
+                _activeSessionBannerText.Bind(ApplySessionBanner);
+            }
+        }
+
+        private void UnbindSessionBanner()
+        {
+            _activeSessionBannerText?.Unbind();
+            _activeSessionBannerText = null;
+            hostDisconnectedText.Unbind();
+            sessionEndedText.Unbind();
+            sceneLoadFailedText.Unbind();
+        }
+
+        private void ApplySessionBanner(string value)
+        {
+            if (sessionBannerTmp != null)
+            {
+                sessionBannerTmp.text = value ?? string.Empty;
+            }
+
+            if (sessionBannerLegacy != null)
+            {
+                sessionBannerLegacy.text = value ?? string.Empty;
+            }
+        }
+
+        private void SetSessionBannerVisible(bool visible)
+        {
+            if (sessionBannerTmp != null)
+            {
+                sessionBannerTmp.gameObject.SetActive(visible);
+            }
+
+            if (sessionBannerLegacy != null)
+            {
+                sessionBannerLegacy.gameObject.SetActive(visible);
             }
         }
     }

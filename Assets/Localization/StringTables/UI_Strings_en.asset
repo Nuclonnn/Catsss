@@ -79,6 +79,79 @@ MonoBehaviour:
     m_Localized: Invalid port. Enter a number from 1 to 65535.
     m_Metadata:
       m_Items: []
+  - m_Id: 10197850200530944
+    m_Localized: Settings
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10197850288611328
+    m_Localized: Settings
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10197850288611329
+    m_Localized: Mouse sensitivity
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10197850288611330
+    m_Localized: Language
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10197850288611331
+    m_Localized: English
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10197850288611332
+    m_Localized: Russian
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10197850288611333
+    m_Localized: Host disconnected.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10197850288611334
+    m_Localized: Session ended.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10874351405293568
+    m_Localized: Levels
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10874351489179648
+    m_Localized: Play
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10874351489179649
+    m_Localized: Locked
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10874351489179650
+    m_Localized: Sandbox
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10874351489179651
+    m_Localized: Level 2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11012109981507584
+    m_Localized: Could not load level "{0}". Add it to Build Profiles and check the
+      scene name in Level Catalog.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11012110061199360
+    m_Localized: Paused
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11012110061199361
+    m_Localized: Resume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11012110061199362
+    m_Localized: Settings
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11012110061199363
+    m_Localized: Exit to menu
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

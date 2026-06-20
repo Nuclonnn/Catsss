@@ -8,7 +8,7 @@
 | **Закрыто недавно** | **Stage 6** ✅ — мышь-актёр: маршруты, cue, trial-реакции, купол, поимка, polish |
 | **Цель альфы** | Vertical slice одного уровня, 2 игрока по сети |
 | **Точка входа** | Сцена `MainMenu` → `Sandbox` |
-| **Последнее обновление** | Июнь 2026 — Stage 6 MVP + polish |
+| **Последнее обновление** | Июнь 2026 — архитектурная полировка menu flow + Stage 6 MVP |
 
 **Ветки Git (рекомендация):** feature-ветка (`NewBranch` и т.п.) для Stage 7; merge в `main` после проверки сцены.
 
@@ -26,7 +26,8 @@
 | Взаимодействие E + URP-контур | ✅ MVP | `Stage 3.md` |
 | Локализация RU/EN | ✅ | `Localization-And-WorldHints.md` |
 | World-space подсказки | ✅ MVP | `Localization-And-WorldHints.md` |
-| Guest connect с валидацией | ✅ | `MainMenu-And-Networking.md` |
+| Guest connect с валидацией + return UX | ✅ | `MainMenu-And-Networking.md` |
+| **Menu flow: FSM, MenuConfig, overlay, return handlers** | ✅ | `MainMenu-And-Networking.md`, `Architecture-Snapshot.md` |
 | **Бросок заряда, Aim, homing, попытки** | ✅ Stage 4 | `Stage 4.md` |
 | **Level kit: MagicSeal, KinematicPlatform, AntiMagic, AeroZone** | ✅ Stage 5 | `Stage 5.md` |
 | **Мышь: маршруты, cue, trial-реакции, купол, поимка** | ✅ Stage 6 | `Stage 6.md` |
@@ -91,7 +92,7 @@
 
 ## Главное меню и сеть
 
-См. **`MainMenu-And-Networking.md`** — Host/Guest, UTP, валидация IP, `MenuConnectionFeedback`.
+См. **`MainMenu-And-Networking.md`** — Host/Guest, UTP, валидация IP, `MenuReturnFeedback`, `MenuConfig`.
 
 ---
 
@@ -113,6 +114,8 @@
 | `Configs/Trials/`, `Configs/AllBaffs/` | Испытания, типы зарядов (`IsHeavy`, `IsAir`) |
 | `Configs/WorldHints/` | World hints |
 | `Configs/Mouse/` | `MouseConfig` — слои, route/dome/rubberband |
+| `Configs/MenuConfig.asset` | MainMenu: порт, overlay, таймауты guest connect |
+| `Configs/LevelCatalog.asset` | Каталог уровней для level select |
 
 ---
 

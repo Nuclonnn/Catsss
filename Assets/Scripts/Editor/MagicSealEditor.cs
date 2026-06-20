@@ -13,9 +13,6 @@ namespace Catsss.LevelKit.Editor
         private SerializedProperty _pressedChannel;
         private SerializedProperty _releasedChannel;
         private SerializedProperty _oneShotChannel;
-        private SerializedProperty _pressed;
-        private SerializedProperty _released;
-        private SerializedProperty _oneShotActivated;
 
         private void OnEnable()
         {
@@ -26,9 +23,6 @@ namespace Catsss.LevelKit.Editor
             _pressedChannel = serializedObject.FindProperty("pressedChannel");
             _releasedChannel = serializedObject.FindProperty("releasedChannel");
             _oneShotChannel = serializedObject.FindProperty("oneShotChannel");
-            _pressed = serializedObject.FindProperty("pressed");
-            _released = serializedObject.FindProperty("released");
-            _oneShotActivated = serializedObject.FindProperty("oneShotActivated");
         }
 
         public override void OnInspectorGUI()
@@ -69,24 +63,6 @@ namespace Catsss.LevelKit.Editor
                     EditorGUILayout.HelpBox(
                         "Trigger-Momentary: Pressed пока игрок в зоне, Released при выходе.",
                         MessageType.None);
-                    break;
-            }
-
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Local Server Events", EditorStyles.boldLabel);
-
-            switch (policy)
-            {
-                case MagicSealActivationPolicy.OneShot:
-                    EditorGUILayout.PropertyField(_oneShotActivated);
-                    break;
-                case MagicSealActivationPolicy.Toggle:
-                    EditorGUILayout.PropertyField(_pressed);
-                    EditorGUILayout.PropertyField(_released);
-                    break;
-                default:
-                    EditorGUILayout.PropertyField(_pressed);
-                    EditorGUILayout.PropertyField(_released);
                     break;
             }
 

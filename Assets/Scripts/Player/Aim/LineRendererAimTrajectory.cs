@@ -1,4 +1,4 @@
-using Catsss.Charges.Projectile;
+using Catsss.Gameplay.Charges.Projectile;
 
 using Catsss.Configs;
 

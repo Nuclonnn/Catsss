@@ -4,6 +4,29 @@
 
 ---
 
+## Июнь 2026 — архитектурная полировка menu flow ✅
+
+**Цель:** убрать дублирование, углубить FSM, вынести настройки меню в SO, привести папки/namespace к единому виду.
+
+**Ключевые изменения:**
+
+| Область | Результат |
+|---------|-----------|
+| Menu flow | `ApplicationFlowController` + сервисы (`AppFlowSessionConnectService`, return/scene load) |
+| Публичный API | `IAppFlowCommands`, `AppFlow.TryGet` — UI/network без прямого singleton |
+| NGO connect | `NetworkSessionConnectRoutines` — общий host/client для flow и dev fallback |
+| SessionStarter | `GameplayNetworkSessionStarter` — только dev Play / `-join`; не скрывает menu overlay |
+| Return UX | `MenuReturnReason` → `IReturnFeedbackHandler` registry → `MenuReturnFeedback` |
+| Настройки меню | `MenuConfig` SO: splash, таймауты, порт, fallback-сцена |
+| Trials | `TrialSessionRegistry` — partial по доменам (progress, throws, modifiers, session-end) |
+| LevelKit | `MagicSeal` / `AntiMagicZone` — только SO channels, без дублирующих `UnityEvent` |
+| Mouse | states в `Gameplay/Mouse/States/`, signal driver base classes |
+| Cleanup | Dev-скрипты в `Scripts/Dev/`, удалён мёртвый API |
+
+**Документы:** `Architecture-Snapshot.md`, `MainMenu-And-Networking.md`, `Development-Status.md`.
+
+---
+
 ## Июнь 2026 — Stage 6: закрыт MVP (мышь-саботажник) ✅
 
 **Цель:** сценическая мышь вместо свободного NavMesh-AI — маршруты, триггеры, связка с Trials и Level Kit.
