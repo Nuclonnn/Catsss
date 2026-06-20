@@ -26,6 +26,8 @@ namespace Catsss.Configs.Mouse
         [SerializeField, Min(0f)] private float rubberbandNearDistance = 5f;
 
         [Header("Dome (Stage 6.7+)")]
+        [Tooltip("Радиус поиска NavMesh при warp агента в куполе (м).")]
+        [SerializeField, Min(0.5f)] private float domeNavMeshSampleRadius = 5f;
         [SerializeField, Min(0.01f)] private float domeFleeDistance = 6f;
         [SerializeField, Min(0.01f)] private float domeAgentSpeed = 3.5f;
 
@@ -37,6 +39,7 @@ namespace Catsss.Configs.Mouse
         public float RubberbandFarDistance => rubberbandFarDistance;
         public float RubberbandSlowMultiplier => rubberbandSlowMultiplier;
         public float RubberbandNearDistance => rubberbandNearDistance;
+        public float DomeNavMeshSampleRadius => domeNavMeshSampleRadius;
         public float DomeFleeDistance => domeFleeDistance;
         public float DomeAgentSpeed => domeAgentSpeed;
     }

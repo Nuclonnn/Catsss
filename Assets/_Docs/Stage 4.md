@@ -142,7 +142,7 @@
 ### Шаг 4.2 — `ChargeProjectile` (прямой полёт, без homing)
 
 **Скрипты:**
-- `Scripts/Charges/Projectile/ChargeProjectile.cs` (`NetworkBehaviour`):
+- `Scripts/Gameplay/Charges/Projectile/ChargeProjectile.cs` (`NetworkBehaviour`):
   - Поля сервера: `_throwerClientId`, `_chargeId`, `_trialId`, `_direction`, `_targetTransform`, `_remainingSnapshot`, `_despawnAt`.
   - `InitializeServer(...)` — вызывается до `Spawn()`.
   - `FixedUpdate` (только сервер): прямое движение `position += dir * speed * dt` + lifetime check.
@@ -182,7 +182,7 @@
 ### Шаг 4.4 — Визуал прицеливания: дуга + маркер цели
 
 **Скрипты:**
-- `Scripts/Charges/Projectile/ProjectileTrajectorySimulator.cs` — `static IReadOnlyList<Vector3> Simulate(...)` с пулом, чтобы переиспользоваться и снарядом (после рефакторинга `FixedUpdate` через тот же путь) и предпросмотром.
+- `Scripts/Gameplay/Charges/Projectile/ProjectileTrajectorySimulator.cs` — `static IReadOnlyList<Vector3> Simulate(...)` с пулом, чтобы переиспользоваться и снарядом (после рефакторинга `FixedUpdate` через тот же путь) и предпросмотром.
 - `Scripts/Player/Aim/IAimTrajectoryRenderer.cs` — интерфейс: `void Show()`, `void Hide()`, `void UpdateTrajectory(Vector3 origin, Vector3 direction, Transform target)`.
 - `Scripts/Player/Aim/LineRendererAimTrajectory.cs` — реализация через `LineRenderer`.
 - `Scripts/Player/Aim/PlayerTargetMarker.cs` — worldspace canvas-маркер, виден только в Aim Mode у владельца.
@@ -199,11 +199,11 @@
 ### Шаг 4.5 — Telegraph эффект на ловящем
 
 **Скрипты:**
-- `Scripts/Charges/Projectile/PlayerIncomingChargeIndicator.cs` (`NetworkBehaviour`):
+- `Scripts/Gameplay/Charges/Projectile/PlayerIncomingChargeIndicator.cs` (`NetworkBehaviour`):
   - `NetworkVariable<ulong> IncomingFromClientId` (0 = нет).
   - `event Action<bool> IsIncomingTargetChanged`.
 - В `ChargeProjectile.OnNetworkSpawn` (сервер) — выставить у ловца. На `OnNetworkDespawn` — сброс.
-- `Scripts/Charges/Projectile/PlayerIncomingChargeVisualStub.cs` — пульсация emission/цвета через `MaterialPropertyBlock`, по аналогии с `PlayerChargeVisualStub`.
+- `Scripts/Gameplay/Charges/Projectile/PlayerIncomingChargeVisualStub.cs` — пульсация emission/цвета через `MaterialPropertyBlock`, по аналогии с `PlayerChargeVisualStub`.
 
 **Unity:**
 - На `PlayerRoot.prefab` — `PlayerIncomingChargeIndicator` + `PlayerIncomingChargeVisualStub` со ссылками на рендерерами кота.

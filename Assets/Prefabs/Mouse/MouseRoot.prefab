@@ -245,7 +245,6 @@ MonoBehaviour:
   catchCollider: {fileID: 2089759336224462783}
   navMeshAgent: {fileID: 0}
   mouseCaughtChannel: {fileID: 0}
-  domeNavMeshSampleRadius: 5
 --- !u!195 &5922238487321583276
 NavMeshAgent:
   m_ObjectHideFlags: 0

@@ -104,6 +104,12 @@ namespace Catsss.Menu
             gameObject.SetActive(true);
         }
 
+        /// <summary>Скрывает активный overlay, если он был создан flow или dev-bootstrap.</summary>
+        public static void DestroyActiveIfAny()
+        {
+            Instance?.HideAndDestroy();
+        }
+
         public void HideAndDestroy()
         {
             if (Instance == this)

@@ -26,3 +26,4 @@ MonoBehaviour:
   rubberbandNearDistance: 5
   domeFleeDistance: 6
   domeAgentSpeed: 4
+  domeNavMeshSampleRadius: 5

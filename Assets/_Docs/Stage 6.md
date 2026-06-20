@@ -156,7 +156,7 @@ Bindings могут быть `playOnce` — не повторяются посл
 
 1. `Physical` layer, catch collider enabled;
 2. `MaterializeClientRpc` → визуал;
-3. `NavMeshAgent` включается, warp на NavMesh (`domeNavMeshSampleRadius`, default 5 м);
+3. `NavMeshAgent` включается, warp на NavMesh (`MouseConfig.DomeNavMeshSampleRadius`, default 5 м);
 4. Flee от ближайшего игрока (`DomeFleeDistance`, `DomeAgentSpeed` из config);
 5. Manual sync: `updatePosition/Rotation = false` → `SyncNavMeshAgentTransformServer()` → `MoveServer` для NGO + kinematic RB.
 
@@ -216,7 +216,7 @@ MouseRoot
 
 1. Запечь NavMesh под платформой купола.
 2. `MouseDomeZone` trigger ИЛИ route с `EnterDome`.
-3. Проверить `domeNavMeshSampleRadius` на MouseBrain если warp не находит mesh.
+3. Проверить `DomeNavMeshSampleRadius` в `MouseConfig`, если warp не находит mesh.
 
 ### 5. Dev-only (Sandbox)
 

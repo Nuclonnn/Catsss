@@ -81,7 +81,7 @@ namespace Catsss.Network
                 return;
             }
 
-            MenuLoadingOverlay.Instance?.HideAndDestroy();
+            MenuLoadingOverlay.DestroyActiveIfAny();
         }
 
         private static void NotifyDevSessionActive()

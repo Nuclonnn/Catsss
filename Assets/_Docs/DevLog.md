@@ -172,7 +172,7 @@
 
 **Решения:** штраф командный; падение = выход из bounds; без kill plane `Y < -10`; без кулдауна на повтор; `ChargeSource` — Stage 4.
 
-**Файлы:** `Scripts/Trials/TrialBoundsZone.cs`, `TrialPenaltyReason.cs`, `TrialSessionRegistry.cs`, `Scripts/Charges/PlayerChargeController.cs`, `Scripts/Player/NetworkPlayerController.cs`.
+**Файлы:** `Scripts/Trials/TrialBoundsZone.cs`, `TrialPenaltyReason.cs`, `TrialSessionRegistry.cs`, `Scripts/Player/PlayerChargeController.cs`, `Scripts/Player/NetworkPlayerController.cs`.
 
 **Документы:** обновлены `Stage 3.md`, `Development-Status.md`, `Architecture-Snapshot.md`.
 

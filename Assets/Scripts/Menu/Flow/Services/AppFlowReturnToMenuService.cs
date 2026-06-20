@@ -21,7 +21,7 @@ namespace Catsss.Menu.Flow.Services
                 manager.Stop();
             }
 
-            MenuLoadingOverlay.Instance?.HideAndDestroy();
+            MenuLoadingOverlay.DestroyActiveIfAny();
             host.SetSessionStartupHandled(false);
 
             bool menuLoaded = false;

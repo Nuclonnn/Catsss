@@ -30,10 +30,6 @@ namespace Catsss.Gameplay.Mouse
         [Header("Events")]
         [SerializeField] private EmptyEventChannel mouseCaughtChannel;
 
-        [Header("Dome")]
-        [Tooltip("Радиус поиска NavMesh при входе в купол (м).")]
-        [SerializeField, Min(0.5f)] private float domeNavMeshSampleRadius = 5f;
-
         private readonly StateMachine _stateMachine = new();
         private readonly MouseBrainTransitionSignals _transitionSignals = new();
         private readonly NetworkVariable<MousePresenceMode> _presenceMode =
@@ -50,7 +46,8 @@ namespace Catsss.Gameplay.Mouse
 
         MouseBrainTransitionSignals IMouseBrainStateHost.TransitionSignals => _transitionSignals;
 
-        float IMouseBrainStateHost.DomeNavMeshSampleRadius => domeNavMeshSampleRadius;
+        float IMouseBrainStateHost.DomeNavMeshSampleRadius =>
+            config != null ? config.DomeNavMeshSampleRadius : 5f;
 
         NavMeshAgent IMouseBrainStateHost.Agent => navMeshAgent;
 
@@ -353,7 +350,11 @@ namespace Catsss.Gameplay.Mouse
                 return false;
             }
 
-            if (!NavMesh.SamplePosition(nearPosition, out NavMeshHit hit, domeNavMeshSampleRadius, NavMesh.AllAreas))
+            if (!NavMesh.SamplePosition(
+                    nearPosition,
+                    out NavMeshHit hit,
+                    ((IMouseBrainStateHost)this).DomeNavMeshSampleRadius,
+                    NavMesh.AllAreas))
             {
                 return false;
             }
