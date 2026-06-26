@@ -228,7 +228,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2902300899
+  GlobalObjectIdHash: 4117060248
   InScenePlacedSourceGlobalObjectIdHash: 2902300899
   DeferredDespawnTick: 0
   Ownership: 1
@@ -261,15 +261,6 @@ MonoBehaviour:
   pressedChannel: {fileID: 0}
   releasedChannel: {fileID: 0}
   oneShotChannel: {fileID: 0}
-  pressed:
-    m_PersistentCalls:
-      m_Calls: []
-  released:
-    m_PersistentCalls:
-      m_Calls: []
-  oneShotActivated:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!114 &6495363644188471960
 MonoBehaviour:
   m_ObjectHideFlags: 0
