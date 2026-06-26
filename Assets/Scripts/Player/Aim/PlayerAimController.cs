@@ -460,7 +460,7 @@ namespace Catsss.Player.Aim
             float forwardOffset = gameConfig.Projectile.spawnForwardOffset;
             origin += direction * forwardOffset;
 
-            Transform targetTransform = ResolveTargetTransform(targetClientId);
+            Transform targetTransform = ProjectileHomingTarget.ResolveTransform(targetClientId);
 
             NetworkObject spawned = Instantiate(chargeProjectilePrefab, origin, Quaternion.LookRotation(direction));
 
@@ -499,60 +499,6 @@ namespace Catsss.Player.Aim
 
 
             spawned.Spawn(true);
-
-        }
-
-
-
-        private static Transform ResolveTargetTransform(ulong targetClientId)
-
-        {
-
-            if (targetClientId == 0)
-
-            {
-
-                return null;
-
-            }
-
-
-
-            NetworkManager networkManager = NetworkManager.Singleton;
-
-
-
-            if (networkManager == null)
-
-            {
-
-                return null;
-
-            }
-
-
-
-            foreach (NetworkClient client in networkManager.ConnectedClientsList)
-
-            {
-
-                if (client.ClientId != targetClientId || client.PlayerObject == null)
-
-                {
-
-                    continue;
-
-                }
-
-
-
-                return client.PlayerObject.transform;
-
-            }
-
-
-
-            return null;
 
         }
 

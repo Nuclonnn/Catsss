@@ -34,6 +34,7 @@ MonoBehaviour:
     spawnForwardOffset: 0.75
     throwSpeed: 12
     homingTurnSpeedDegPerSec: 110
+    homingMinStraightDistance: 1.5
     maxLifetime: 4
     aimViewportX: 0.5
     aimViewportY: 0.65

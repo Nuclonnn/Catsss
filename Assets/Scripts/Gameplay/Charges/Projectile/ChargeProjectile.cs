@@ -34,6 +34,8 @@ namespace Catsss.Gameplay.Charges.Projectile
         private float _despawnAt;
         private float _throwSpeed;
         private float _homingTurnSpeedDegPerSec;
+        private float _homingMinStraightDistance;
+        private Vector3 _spawnPosition;
         private bool _isInitialized;
         private bool _resolutionHandled;
         private bool _spawnOverlapChecked;
@@ -105,6 +107,8 @@ namespace Catsss.Gameplay.Charges.Projectile
             float lifetime = settings != null ? settings.maxLifetime : 4f;
             _throwSpeed = settings != null ? settings.throwSpeed : 12f;
             _homingTurnSpeedDegPerSec = settings != null ? settings.homingTurnSpeedDegPerSec : 110f;
+            _homingMinStraightDistance = settings != null ? settings.homingMinStraightDistance : 1.5f;
+            _spawnPosition = transform.position;
             _despawnAt = Time.time + lifetime;
             _isInitialized = true;
             _resolutionHandled = false;
@@ -181,7 +185,29 @@ namespace Catsss.Gameplay.Charges.Projectile
 
         private void ApplyHomingStep()
         {
+            if (_targetClientId == 0)
+            {
+                return;
+            }
+
             if (_targetTransform == null)
+            {
+                _targetTransform = ProjectileHomingTarget.ResolveTransform(_targetClientId);
+            }
+
+            if (_targetTransform == null)
+            {
+                return;
+            }
+
+            float traveled = Vector3.Distance(_spawnPosition, transform.position);
+
+            if (traveled < _homingMinStraightDistance)
+            {
+                return;
+            }
+
+            if (!ProjectileHomingTarget.TryGetWorldPosition(_targetTransform, out Vector3 targetPosition))
             {
                 return;
             }
@@ -189,7 +215,7 @@ namespace Catsss.Gameplay.Charges.Projectile
             _direction = ProjectileTrajectorySimulator.ApplyHomingStep(
                 _direction,
                 transform.position,
-                _targetTransform.position,
+                targetPosition,
                 _homingTurnSpeedDegPerSec,
                 Time.fixedDeltaTime);
         }

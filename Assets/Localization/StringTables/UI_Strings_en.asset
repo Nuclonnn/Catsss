@@ -128,7 +128,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 10874351489179651
-    m_Localized: Level 2
+    m_Localized: Level 1
     m_Metadata:
       m_Items: []
   - m_Id: 11012109981507584
@@ -150,6 +150,18 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 11012110061199363
     m_Localized: Exit to menu
+    m_Metadata:
+      m_Items: []
+  - m_Id: 13421913135964160
+    m_Localized: Level 2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 13421913194684416
+    m_Localized: Congratulations, you passed level
+    m_Metadata:
+      m_Items: []
+  - m_Id: 13421913194684417
+    m_Localized: Menu
     m_Metadata:
       m_Items: []
   references:

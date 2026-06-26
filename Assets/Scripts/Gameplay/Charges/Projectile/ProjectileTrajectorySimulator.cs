@@ -32,15 +32,18 @@ namespace Catsss.Gameplay.Charges.Projectile
             float stepDt = Mathf.Max(0.01f, settings.trajectorySimulationStep);
             float speed = settings.throwSpeed;
             float turnSpeedDeg = settings.homingTurnSpeedDegPerSec;
+            float minStraightDistance = Mathf.Max(0f, settings.homingMinStraightDistance);
 
             Vector3 position = origin;
             Vector3 flightDirection = direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector3.forward;
+            float distanceTraveled = 0f;
 
             ScratchPoints.Add(position);
 
             for (int i = 0; i < steps; i++)
             {
-                if (targetWorldPosition.HasValue)
+                if (targetWorldPosition.HasValue
+                    && distanceTraveled >= minStraightDistance)
                 {
                     flightDirection = ApplyHomingStep(
                         flightDirection,
@@ -50,7 +53,9 @@ namespace Catsss.Gameplay.Charges.Projectile
                         stepDt);
                 }
 
-                position += flightDirection * (speed * stepDt);
+                Vector3 stepDelta = flightDirection * (speed * stepDt);
+                position += stepDelta;
+                distanceTraveled += stepDelta.magnitude;
                 ScratchPoints.Add(position);
             }
 

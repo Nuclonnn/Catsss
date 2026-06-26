@@ -53,6 +53,8 @@ namespace Catsss.EditorTools
             ("pause.resume", "Resume", "Продолжить"),
             ("pause.settings", "Settings", "Настройки"),
             ("pause.exit_session", "Exit to menu", "Выйти в меню"),
+            ("victory.title", "Congratulations, you passed level", "Поздравляем, вы прошли уровень"),
+            ("victory.menu", "Menu", "В меню"),
         };
 
         [MenuItem(MenuPath)]

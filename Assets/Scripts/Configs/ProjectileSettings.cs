@@ -23,6 +23,10 @@ namespace Catsss.Configs
         [Tooltip("Сила доводки homing (град/с).")]
         public float homingTurnSpeedDegPerSec = 110f;
 
+        [Min(0f)]
+        [Tooltip("Дистанция полёта по начальному направлению до включения homing (м).")]
+        public float homingMinStraightDistance = 1.5f;
+
         [Min(0.1f)]
         [Tooltip("Макс. время жизни снаряда (с); истечение = промах.")]
         public float maxLifetime = 4f;

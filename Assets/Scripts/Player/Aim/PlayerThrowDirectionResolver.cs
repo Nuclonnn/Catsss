@@ -1,5 +1,6 @@
 using System;
 using Catsss.Configs;
+using Catsss.Player;
 using UnityEngine;
 
 namespace Catsss.Player.Aim
@@ -141,12 +142,18 @@ namespace Catsss.Player.Aim
 
         private static bool ShouldIgnoreHit(RaycastHit hit, Transform ignoreRoot)
         {
-            if (ignoreRoot == null || hit.collider == null)
+            if (hit.collider == null)
             {
                 return false;
             }
 
-            return hit.collider.transform.IsChildOf(ignoreRoot);
+            // Своего кота отсекаем по корню; напарников — всегда: прицел = камера, homing дотягивает отдельно.
+            if (ignoreRoot != null && hit.collider.transform.IsChildOf(ignoreRoot))
+            {
+                return true;
+            }
+
+            return hit.collider.GetComponentInParent<NetworkPlayerController>() != null;
         }
 
         /// <summary>Промах / небо: точка вдоль луча экрана (сохраняет угол вверх).</summary>

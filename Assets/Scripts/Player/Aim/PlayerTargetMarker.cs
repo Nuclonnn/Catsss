@@ -3,86 +3,48 @@ using UnityEngine;
 
 namespace Catsss.Player.Aim
 {
-    /// <summary>World-space маркер над целью броска. Не должен отключать родителя AimVisualsRoot.</summary>
+    /// <summary>Жёлтый контур напарника в Aim Mode. Без world-маркера / крестика.</summary>
     [DisallowMultipleComponent]
     public sealed class PlayerTargetMarker : MonoBehaviour
     {
         [SerializeField] private GameObject visualRoot;
-        [SerializeField] private Vector3 worldOffset = new(0f, 2f, 0f);
-        [SerializeField] private bool billboardToCamera = true;
 
-        private Transform _followTarget;
-        private Camera _billboardCamera;
         private InteractableHighlightStub _targetOutline;
 
-        private void Reset()
+        private void Awake()
         {
-            if (visualRoot == null || visualRoot == gameObject)
-            {
-                Canvas canvas = GetComponentInChildren<Canvas>(true);
-
-                if (canvas != null)
-                {
-                    visualRoot = canvas.gameObject;
-                }
-            }
+            HideLegacyMarkerVisual();
         }
 
         public void Show(NetworkPlayerController target, Camera ownerCamera)
         {
-            _billboardCamera = ownerCamera;
+            HideLegacyMarkerVisual();
             AttachTarget(target);
-            SetMarkerVisualActive(true);
-            RefreshPosition();
             SetTargetOutlineHighlighted(true);
         }
 
         public void Hide()
         {
             SetTargetOutlineHighlighted(false);
-            SetMarkerVisualActive(false);
-            _followTarget = null;
             _targetOutline = null;
-            _billboardCamera = null;
+            HideLegacyMarkerVisual();
         }
 
         public void RefreshPosition()
         {
-            if (_followTarget == null)
-            {
-                return;
-            }
-
-            transform.position = _followTarget.position + worldOffset;
-
-            if (billboardToCamera && _billboardCamera != null)
-            {
-                Vector3 toCamera = _billboardCamera.transform.position - transform.position;
-
-                if (toCamera.sqrMagnitude > 0.0001f)
-                {
-                    transform.rotation = Quaternion.LookRotation(-toCamera.normalized, Vector3.up);
-                }
-            }
+            // Контур на модели напарника — отдельный world-маркер не нужен.
         }
 
-        private void SetMarkerVisualActive(bool active)
+        private void HideLegacyMarkerVisual()
         {
             if (visualRoot != null && visualRoot != gameObject)
             {
-                visualRoot.SetActive(active);
-                return;
-            }
-
-            for (int i = 0; i < transform.childCount; i++)
-            {
-                transform.GetChild(i).gameObject.SetActive(active);
+                visualRoot.SetActive(false);
             }
         }
 
         private void AttachTarget(NetworkPlayerController target)
         {
-            _followTarget = target != null ? target.transform : null;
             _targetOutline = null;
 
             if (target == null)

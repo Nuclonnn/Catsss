@@ -141,7 +141,12 @@ namespace Catsss.Player.Aim
 
 
 
-            Vector3? targetPosition = target != null ? target.position : null;
+            Vector3? targetPosition = null;
+
+            if (target != null && ProjectileHomingTarget.TryGetWorldPosition(target, out Vector3 resolvedTarget))
+            {
+                targetPosition = resolvedTarget;
+            }
 
 
 

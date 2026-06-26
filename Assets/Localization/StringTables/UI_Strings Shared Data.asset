@@ -124,7 +124,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 10874351489179651
-    m_Key: level.level02.name
+    m_Key: level.level01.name
     m_Metadata:
       m_Items: []
   - m_Id: 11012109981507584
@@ -145,6 +145,18 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 11012110061199363
     m_Key: pause.exit_session
+    m_Metadata:
+      m_Items: []
+  - m_Id: 13421913135964160
+    m_Key: level.level02.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 13421913194684416
+    m_Key: victory.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 13421913194684417
+    m_Key: victory.menu
     m_Metadata:
       m_Items: []
   m_Metadata:

@@ -13,13 +13,13 @@ MonoBehaviour:
   m_Name: LevelCatalog
   m_EditorClassIdentifier: Assembly-CSharp::Catsss.Menu.Levels.LevelCatalog
   levels:
+  - sceneName: Sandbox_1
+    displayNameKey: level.level01.name
+    thumbnail: {fileID: 21300000, guid: 3a75eb292a90a4047a9f91d41e132206, type: 3}
+    isUnlocked: 1
+    sortOrder: 0
   - sceneName: Sandbox
     displayNameKey: level.sandbox.name
     thumbnail: {fileID: 21300000, guid: 380858d5485133942af893b8d1a736e9, type: 3}
-    isUnlocked: 1
-    sortOrder: 0
-  - sceneName: Sandbox_1
-    displayNameKey: level.level02.name
-    thumbnail: {fileID: 21300000, guid: 98c55932b6ff69a45bbd382a9164ddf6, type: 3}
     isUnlocked: 1
     sortOrder: 1
