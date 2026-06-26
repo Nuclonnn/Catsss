@@ -40,7 +40,7 @@ namespace Catsss.Gameplay.Charges.Projectile
 
         public static Transform ResolveTransform(ulong clientId)
         {
-            if (clientId == 0)
+            if (clientId == ulong.MaxValue)
             {
                 return null;
             }
@@ -52,14 +52,22 @@ namespace Catsss.Gameplay.Charges.Projectile
                 return null;
             }
 
-            foreach (NetworkClient client in networkManager.ConnectedClientsList)
+            if (networkManager.IsServer && networkManager.ConnectedClients.TryGetValue(clientId, out NetworkClient client))
             {
-                if (client.ClientId != clientId || client.PlayerObject == null)
-                {
-                    continue;
-                }
+                return client.PlayerObject != null ? client.PlayerObject.transform : null;
+            }
 
-                return client.PlayerObject.transform;
+            // Fallback для клиента (на всякий случай, если метод вызовется на клиенте)
+            if (networkManager.SpawnManager != null)
+            {
+                foreach (var kvp in networkManager.SpawnManager.SpawnedObjects)
+                {
+                    NetworkObject spawnedObject = kvp.Value;
+                    if (spawnedObject != null && spawnedObject.IsPlayerObject && spawnedObject.OwnerClientId == clientId)
+                    {
+                        return spawnedObject.transform;
+                    }
+                }
             }
 
             return null;

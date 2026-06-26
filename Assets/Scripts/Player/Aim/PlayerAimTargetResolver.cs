@@ -56,18 +56,21 @@ namespace Catsss.Player.Aim
         {
             NetworkManager networkManager = NetworkManager.Singleton;
 
-            if (networkManager == null || !networkManager.IsClient)
+            if (networkManager == null || networkManager.SpawnManager == null)
             {
                 return;
             }
 
-            foreach (NetworkClient client in networkManager.ConnectedClientsList)
+            foreach (var kvp in networkManager.SpawnManager.SpawnedObjects)
             {
-                NetworkObject playerObject = client.PlayerObject;
+                NetworkObject spawnedObject = kvp.Value;
 
-                if (playerObject == null
-                    || !playerObject.TryGetComponent(out NetworkPlayerController controller)
-                    || controller == self)
+                if (spawnedObject == null || !spawnedObject.TryGetComponent(out NetworkPlayerController controller))
+                {
+                    continue;
+                }
+
+                if (controller == self)
                 {
                     continue;
                 }

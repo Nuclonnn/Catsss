@@ -185,7 +185,7 @@ namespace Catsss.Gameplay.Charges.Projectile
 
         private void ApplyHomingStep()
         {
-            if (_targetClientId == 0)
+            if (_targetClientId == ulong.MaxValue)
             {
                 return;
             }
@@ -601,7 +601,7 @@ namespace Catsss.Gameplay.Charges.Projectile
 
         private void TryRegisterIncomingTelegraphServer()
         {
-            if (_targetClientId == 0
+            if (_targetClientId == ulong.MaxValue
                 || !PlayerIncomingChargeIndicator.TryGetForClient(_targetClientId, out PlayerIncomingChargeIndicator indicator))
             {
                 return;

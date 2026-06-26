@@ -12,16 +12,16 @@ namespace Catsss.Gameplay.Charges.Projectile
     public sealed class PlayerIncomingChargeIndicator : NetworkBehaviour
     {
         private readonly NetworkVariable<ulong> _incomingFromClientId = new(
-            0,
+            ulong.MaxValue,
             NetworkVariableReadPermission.Everyone,
             NetworkVariableWritePermission.Server);
 
         private int _serverIncomingCount;
 
-        /// <summary>OwnerClientId кидавшего или 0 — ничего не летит.</summary>
+        /// <summary>OwnerClientId кидавшего или ulong.MaxValue — ничего не летит.</summary>
         public ulong IncomingFromClientId => _incomingFromClientId.Value;
 
-        public bool HasIncomingCharge => _incomingFromClientId.Value != 0;
+        public bool HasIncomingCharge => _incomingFromClientId.Value != ulong.MaxValue;
 
         /// <summary>Вкл/выкл telegraph (удобно для VFX/Animator bool).</summary>
         public event Action<bool> IsIncomingTargetChanged;
@@ -33,7 +33,7 @@ namespace Catsss.Gameplay.Charges.Projectile
         {
             _incomingFromClientId.OnValueChanged += OnIncomingFromClientIdChanged;
             ulong initial = _incomingFromClientId.Value;
-            PublishFromValue(initial, notifyBoolChanged: initial != 0);
+            PublishFromValue(initial, notifyBoolChanged: initial != ulong.MaxValue);
         }
 
         public override void OnNetworkDespawn()
@@ -44,7 +44,7 @@ namespace Catsss.Gameplay.Charges.Projectile
         /// <summary>Сервер: снаряд начал полёт к этому игроку.</summary>
         public void RegisterIncomingThrowServer(ulong throwerClientId)
         {
-            if (!IsServer || throwerClientId == 0)
+            if (!IsServer || throwerClientId == ulong.MaxValue)
             {
                 return;
             }
@@ -65,7 +65,7 @@ namespace Catsss.Gameplay.Charges.Projectile
 
             if (_serverIncomingCount == 0)
             {
-                _incomingFromClientId.Value = 0;
+                _incomingFromClientId.Value = ulong.MaxValue;
             }
         }
 
@@ -79,14 +79,12 @@ namespace Catsss.Gameplay.Charges.Projectile
                 return false;
             }
 
-            foreach (NetworkClient client in networkManager.ConnectedClientsList)
+            if (networkManager.IsServer && networkManager.ConnectedClients.TryGetValue(clientId, out NetworkClient client))
             {
-                if (client.ClientId != clientId || client.PlayerObject == null)
+                if (client.PlayerObject != null)
                 {
-                    continue;
+                    return client.PlayerObject.TryGetComponent(out indicator);
                 }
-
-                return client.PlayerObject.TryGetComponent(out indicator);
             }
 
             return false;
@@ -94,8 +92,8 @@ namespace Catsss.Gameplay.Charges.Projectile
 
         private void OnIncomingFromClientIdChanged(ulong previousValue, ulong newValue)
         {
-            bool wasIncoming = previousValue != 0;
-            bool isIncoming = newValue != 0;
+            bool wasIncoming = previousValue != ulong.MaxValue;
+            bool isIncoming = newValue != ulong.MaxValue;
 
             PublishFromValue(newValue, notifyBoolChanged: wasIncoming != isIncoming);
         }
@@ -104,7 +102,7 @@ namespace Catsss.Gameplay.Charges.Projectile
         {
             if (notifyBoolChanged)
             {
-                IsIncomingTargetChanged?.Invoke(throwerClientId != 0);
+                IsIncomingTargetChanged?.Invoke(throwerClientId != ulong.MaxValue);
             }
 
             IncomingThrowerClientIdChanged?.Invoke(throwerClientId);

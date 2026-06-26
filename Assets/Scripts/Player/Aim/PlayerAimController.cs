@@ -92,9 +92,8 @@ namespace Catsss.Player.Aim
 
 
 
-        /// <summary>OwnerClientId цели или 0 — нет напарника (прямой полёт по камере).</summary>
-
-        public ulong CurrentTargetClientId => _currentTarget != null ? _currentTarget.OwnerClientId : 0;
+        /// <summary>OwnerClientId цели или ulong.MaxValue — нет напарника (прямой полёт по камере).</summary>
+        public ulong CurrentTargetClientId => _currentTarget != null ? _currentTarget.OwnerClientId : ulong.MaxValue;
 
 
 
